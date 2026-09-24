@@ -1,4 +1,4 @@
-name: Build Anton POS APK
+[![.github/workflows/main.yml](https://github.com/koluod25-cyber/Anton/actions/workflows/main.yml/badge.svg)](https://github.com/koluod25-cyber/Anton/actions/workflows/main.yml)name: Build Anton POS APK
 
 on:
   workflow_dispatch:
