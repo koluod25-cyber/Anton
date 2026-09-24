@@ -1,0 +1,103 @@
+name: Build Anton POS APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web
+        run: pnpm build
+
+      # Cek hasil build web
+      - name: List dist
+        run: |
+          ls -la
+          ls -la dist || ls -la dist/public || echo "dist not found"
+
+      - name: Setup Capacitor
+        run: |
+          pnpm add -D @capacitor/cli @capacitor/core @capacitor/android
+          if [ ! -f capacitor.config.ts ] && [ ! -f capacitor.config.json ]; then
+            npx cap init "Anton Service POS" "com.antonservice.pos" --web-dir=dist
+          fi
+          # Deteksi webDir yang benar
+          if [ -d dist/public ]; then
+            npx cap init "Anton Service POS" "com.antonservice.pos" --web-dir=dist/public --npm-client pnpm || true
+          fi
+          if [ ! -d android ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v4
+
+      # --- TRY SIGNING IF SECRETS EXIST ---
+      - name: Decode Keystore (if secret exists)
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_B64" | base64 --decode > android/app/release.jks
+
+      - name: Build Release APK (signed if keystore exists)
+        working-directory: android
+        env:
+          KEYSTORE_PWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PWD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -f app/release.jks ]; then
+            echo "Building SIGNED release APK"
+            echo "MYAPP_UPLOAD_STORE_FILE=release.jks" >> gradle.properties
+            echo "MYAPP_UPLOAD_KEY_ALIAS=$KEY_ALIAS" >> gradle.properties
+            echo "MYAPP_UPLOAD_STORE_PASSWORD=$KEYSTORE_PWD" >> gradle.properties
+            echo "MYAPP_UPLOAD_KEY_PASSWORD=$KEY_PWD" >> gradle.properties
+            ./gradlew assembleRelease
+          else
+            echo "No keystore secret found, building UNSIGNED release + debug"
+            ./gradlew assembleDebug
+            ./gradlew assembleRelease
+          fi
+
+      - name: List APK outputs
+        run: |
+          find android -name "*.apk" -type f
+          ls -lh android/app/build/outputs/apk/debug/ || true
+          ls -lh android/app/build/outputs/apk/release/ || true
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anton-pos-apk
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
