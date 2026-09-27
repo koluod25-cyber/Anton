@@ -178,7 +178,21 @@ export const normalizeTransactionPayments = (transaction: Transaction): Transact
 };
 export const transactionSettlementTotal = (transaction: Transaction) => (transaction.settlements || []).reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
 export const transactionReceivableOutstanding = (transaction: Transaction) => Math.max(0, normalizeTransactionPayments(transaction).piutang - transactionSettlementTotal(transaction));
-export const transactionPaymentLabel = export const buildReceiptText = (transaction: Transaction,  printer: PrinterSettings) => {
+export const transactionPaymentLabel = (transaction: Transaction) => {
+  const p = normalizeTransactionPayments(transaction);
+
+  const methods = [
+    p.cash > 0 ? `Cash ${formatCurrency(p.cash)}` : "",
+    p.transfer > 0 ? `Transfer ${formatCurrency(p.transfer)}` : "",
+    p.qris > 0 ? `QRIS ${formatCurrency(p.qris)}` : "",
+    p.piutang > 0 ? `Piutang ${formatCurrency(p.piutang)}` : "",
+  ].filter(Boolean);
+
+  return methods.length > 0
+    ? methods.join(" + ")
+    : transaction.paymentMethod;
+};
+export const buildReceiptText = (transaction: Transaction,  printer: PrinterSettings) => {
   const p = normalizeTransactionPayments(transaction);
   const settlementTotal = transactionSettlementTotal(transaction);
   const outstanding = transactionReceivableOutstanding(transaction);
