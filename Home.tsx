@@ -9,7 +9,7 @@ import {
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-
+import { BluetoothPrinterBridge } from "./BluetoothPrinterBridge";
 type ProductType = "jasa" | "spare" | "beban";
 type PaymentMethod = "Cash" | "Transfer" | "QRIS" | "Piutang" | "Split";
 type TransactionPayments = { cash: number; transfer: number; qris: number; piutang: number };
@@ -176,9 +176,124 @@ export const normalizeTransactionPayments = (transaction: Transaction): Transact
   if (transaction.paymentMethod === "Piutang") return { cash: 0, transfer: 0, qris: 0, piutang: transaction.total };
   return { cash: 0, transfer: 0, qris: 0, piutang: 0 };
 };
-export const transactionSettlementTotal = (transaction: Transaction) => (transaction.settlements || []).reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
+export const transactionSettrrlementTotal = (transaction: Transaction) => (transaction.settlements || []).reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
 export const transactionReceivableOutstanding = (transaction: Transaction) => Math.max(0, normalizeTransactionPayments(transaction).piutang - transactionSettlementTotal(transaction));
-export const transactionPaymentLabel = (transaction: Transaction) => { const p = normalizeTransactionPayments(transaction); return [p.cash && `Cash ${formatCurrency(p.cash)}`, p.transfer && `Transfer ${formatCurrency(p.transfer)}`, p.qris && `QRIS ${formatCurrency(p.qris)}`, p.piutang && `Piutang ${formatCurrency(p.piutang)}`].filter(Boolean).join(" + ") || transaction.paymentMethod; };
+export const transactionPaymentLabel = export const buildReceiptText = (
+  transaction: Transaction,
+  printer: PrinterSettings
+) => {
+  const p = normalizeTransactionPayments(transaction);
+  const settlementTotal = transactionSettlementTotal(transaction);
+  const outstanding = transactionReceivableOutstanding(transaction);
+
+  const paidAtSale = p.cash + p.transfer + p.qris;
+  const totalPaid = paidAtSale + settlementTotal;
+
+  const change = Math.max(
+    0,
+    transaction.change || Math.max(0, paidAtSale - transaction.total)
+  );
+
+  const width =
+    printer.size === "58mm" ? 32 :
+    printer.size === "80mm" ? 48 : 80;
+
+  const line = "-".repeat(width);
+
+  const money = (value: number) =>
+    formatCurrency(value).replace("Rp ", "Rp ");
+
+  const center = (text: string) => {
+    const value = String(text);
+    if (value.length >= width) return value.slice(0, width);
+    const left = Math.floor((width - value.length) / 2);
+    return " ".repeat(left) + value;
+  };
+
+  const row = (label: string, value: string) => {
+    const maxLabel = Math.max(1, width - value.length - 1);
+    return `${label.slice(0, maxLabel).padEnd(maxLabel)} ${value}`;
+  };
+
+  const paymentLines = [
+    p.cash > 0 ? row("Cash", money(p.cash)) : "",
+    p.transfer > 0 ? row("Transfer", money(p.transfer)) : "",
+    p.qris > 0 ? row("QRIS", money(p.qris)) : "",
+    p.piutang > 0 ? row("Sisa belum dibayar", money(p.piutang)) : "",
+  ].filter(Boolean);
+
+  const settlementLines =
+    transaction.settlements?.map(
+      item => `${item.method}: ${money(item.amount)}`
+    ) || [];
+
+  return [
+    center("ANTON SERVICE"),
+    center("ELECTRICAL ENGINEERING"),
+    printer.nib,
+    printer.address,
+    printer.phone,
+    "",
+    center(printer.headerText),
+    line,
+    `No: ${transaction.noNota}`,
+    `Tgl: ${formatTransactionDate(transaction.date)}`,
+    `Pelanggan: ${transaction.customer}`,
+    line,
+
+    ...transaction.items.flatMap(item => [
+      item.name,
+      row(
+        `${item.qty} x ${money(item.price)}`,
+        money(item.qty * item.price)
+      ),
+    ]),
+
+    line,
+    row("Subtotal", money(transaction.subtotal)),
+    row("Discount", `-${money(transaction.discount)}`),
+
+    row(
+      `Pajak ${transaction.tax}%`,
+      money(
+        calculateTransactionAmounts(
+          transaction.subtotal,
+          transaction.discount,
+          transaction.tax
+        ).taxAmount
+      )
+    ),
+
+    row("TOTAL", money(transaction.total)),
+    line,
+
+    "PEMBAYARAN:",
+    ...paymentLines,
+
+    ...(settlementLines.length
+      ? ["PELUNASAN PIUTANG:", ...settlementLines]
+      : []),
+
+    "",
+    row(
+      "Status",
+      outstanding > 0 ? "BELUM LUNAS" : "LUNAS"
+    ),
+
+    row("Kembalian", money(change)),
+    row("Sisa yang harus dibayar", money(outstanding)),
+
+    line,
+    center(printer.footerText),
+    center(printer.warrantyText),
+    "",
+    center(`GARANSI: ${transaction.warrantyCode}`),
+    "",
+    "",
+  ]
+    .filter(line => line !== undefined)
+    .join("\n");
+};
 export const transactionNetTotal = (transaction: Pick<Transaction, "subtotal" | "discount" | "tax">) => calculateTransactionAmounts(transaction.subtotal || 0, transaction.discount || 0, transaction.tax || 0).total;
 export const transactionRevenueBreakdown = (transaction: Partial<Pick<Transaction, "subtotal" | "discount" | "jasaTotal" | "spareTotal">> & { items?: TransactionItem[] }) => {
   const jasaTotal = transaction.jasaTotal ?? transaction.items?.reduce((sum, item) => sum + (item.type === "jasa" ? item.price * item.qty : 0), 0) ?? 0;
