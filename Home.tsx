@@ -176,12 +176,9 @@ export const normalizeTransactionPayments = (transaction: Transaction): Transact
   if (transaction.paymentMethod === "Piutang") return { cash: 0, transfer: 0, qris: 0, piutang: transaction.total };
   return { cash: 0, transfer: 0, qris: 0, piutang: 0 };
 };
-export const transactionSettrrlementTotal = (transaction: Transaction) => (transaction.settlements || []).reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
+export const transactionSettlementTotal = (transaction: Transaction) => (transaction.settlements || []).reduce((sum, item) => sum + Math.max(0, item.amount || 0), 0);
 export const transactionReceivableOutstanding = (transaction: Transaction) => Math.max(0, normalizeTransactionPayments(transaction).piutang - transactionSettlementTotal(transaction));
-export const transactionPaymentLabel = export const buildReceiptText = (
-  transaction: Transaction,
-  printer: PrinterSettings
-) => {
+export const transactionPaymentLabel = export const buildReceiptText = (transaction: Transaction,  printer: PrinterSettings) => {
   const p = normalizeTransactionPayments(transaction);
   const settlementTotal = transactionSettlementTotal(transaction);
   const outstanding = transactionReceivableOutstanding(transaction);
