@@ -81,9 +81,15 @@ const seedProducts: Product[] = [
 ];
 
 const defaultPrinter: PrinterSettings = {
-  size: "80mm", headerText: "Terima kasih atas kepercayaan Anda", footerText: "Barang yang sudah dibeli tidak dapat dikembalikan", warrantyText: "Garansi Service 30 Hari", nib: "NIB : 2308230071069", address: "Jl. Trans Sulawesi, Kel. Rumoong Bawah, Kec. Amurang Barat, Kab. Minahasa Selatan.", phone: "TLP. 0812-818-98808", showLogo: true,
+  size: "80mm",
+  headerText: "Terima kasih atas kepercayaan Anda",
+  footerText: "Barang yang sudah dibeli tidak dapat dikembalikan",
+  warrantyText: "Garansi Service 30 Hari",
+  nib: "NIB : 2308230071069",
+  address: "Jl. Trans Sulawesi, Kel. Rumoong Bawah, Kec. Amurang Barat, Kab. Minahasa Selatan.",
+  phone: "TLP. 0812-818-98808",
+  showLogo: true,
 };
-
 const formatCurrency = (value: number) => `Rp ${Math.round(value).toLocaleString("id-ID")}`;
 export const dayKey = (date: Date) => date.toDateString();
 export const formatTransactionDate = (date: string | number | Date) => new Date(date).toLocaleString("id-ID");
