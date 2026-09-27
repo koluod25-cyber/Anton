@@ -31,7 +31,28 @@ export function upsertCustomAccount(previous: Account[], account: Account, origi
 export function removeCustomAccount(previous: Account[], code: string) {
   return previous.filter(entry => entry.code !== code);
 }
-type PrinterSettings = { size: "58mm" | "80mm" | "A4"; headerText: string; footerText: string; warrantyText: string; nib: string; address: string; phone: string; showLogo: boolean };
+type PrinterSettings = {
+  size: "58mm" | "80mm" | "A4";
+
+  connection: "Bluetooth" | "WiFi" | "System";
+
+  bluetoothName: string;
+  bluetoothAddress: string;
+
+  wifiHost: string;
+  wifiPort: number;
+
+  copies: number;
+  colorMode: "BW" | "Color";
+
+  headerText: string;
+  footerText: string;
+  warrantyText: string;
+  nib: string;
+  address: string;
+  phone: string;
+  showLogo: boolean;
+};
 export type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }> };
 export function captureInstallPrompt(event: Event, setPrompt: (prompt: InstallPromptEvent) => void) {
   event.preventDefault();
