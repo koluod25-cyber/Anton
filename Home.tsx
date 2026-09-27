@@ -81,12 +81,25 @@ const seedProducts: Product[] = [
 ];
 
 const defaultPrinter: PrinterSettings = {
-  size: "80mm",
+  size: "58mm",
+
+  connection: "Bluetooth",
+
+  bluetoothName: "POS-58B",
+  bluetoothAddress: "",
+
+  wifiHost: "",
+  wifiPort: 9100,
+
+  copies: 1,
+  colorMode: "BW",
+
   headerText: "Terima kasih atas kepercayaan Anda",
   footerText: "Barang yang sudah dibeli tidak dapat dikembalikan",
   warrantyText: "Garansi Service 30 Hari",
   nib: "NIB : 2308230071069",
-  address: "Jl. Trans Sulawesi, Kel. Rumoong Bawah, Kec. Amurang Barat, Kab. Minahasa Selatan.",
+  address:
+    "Jl. Trans Sulawesi, Kel. Rumoong Bawah, Kec. Amurang Barat, Kab. Minahasa Selatan.",
   phone: "TLP. 0812-818-98808",
   showLogo: true,
 };
