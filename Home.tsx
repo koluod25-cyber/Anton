@@ -1,4 +1,5 @@
 /* Anton Service POS page: workshop operating-system interface with graphite sidebar and semantic financial color signals. */
+import { BluetoothPrinterBridge } from "./BluetoothPrinterBridge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3, BookOpen, Check, ChevronDown, CircleAlert, ClipboardList, CreditCard, Download,
@@ -548,6 +549,14 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>(() => readStored("anton_transactions_v22", []));
   const [customAccounts, setCustomAccounts] = useState<Account[]>(() => readStored("anton_coa_v22", []));
   const [printer, setPrinter] = useState<PrinterSettings>(() => ({ ...defaultPrinter, ...readStored<Partial<PrinterSettings>>("anton_printer_v22", {}) }));
+  const [printerBusy, setPrinterBusy] = useState(false);
+
+  const [pairedPrinters, setPairedPrinters] = useState<
+  {
+    name: string;
+    address: string;
+  }[]
+>([]);  
   const [logo, setLogo] = useState<string>(() => { const stored = readStored<string>("anton_logo_v22", MARK_URL); return stored.includes("anton-service-mark_") ? MARK_URL : stored; });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState("Umum");
