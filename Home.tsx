@@ -1,5 +1,4 @@
 /* Anton Service POS page: workshop operating-system interface with graphite sidebar and semantic financial color signals. */
-import { BluetoothPrinterBridge } from "./BluetoothPrinterBridge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart3, BookOpen, Check, ChevronDown, CircleAlert, ClipboardList, CreditCard, Download,
@@ -200,8 +199,7 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
 
   const change = Math.max(
     0,
-    transaction.change || Math.max(0, paidAtSale - transaction.total)
-  );
+  const change = Math.max(0, transaction.change || 0);
 
   const width =
     printer.size === "58mm" ? 32 :
@@ -1074,9 +1072,16 @@ export default function Home() {
       <div className="pr-6"><p className="panel-label">Anton Service POS</p><h2 className="mt-1 text-lg font-extrabold">Download / Install Aplikasi</h2><p className="mt-2 text-xs leading-relaxed text-slate-500">Gunakan tombol instalasi browser untuk mengunduh dan memasang Anton POS sebagai aplikasi di perangkat ini.</p></div><div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-800"><p className="font-extrabold">Cara tercepat</p><p className="mt-1">Pada Chrome/Edge, pilih <b>Install</b> pada dialog browser atau ikon instalasi di address bar. Data kasir tetap tersimpan di aplikasi.</p></div>
       <div className="mt-5 space-y-3 text-xs leading-relaxed text-slate-600"><div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="font-extrabold text-slate-900">Android / Chrome</p><p className="mt-1">Buka menu browser, pilih <b>Install app</b> atau <b>Tambahkan ke layar utama</b>, lalu konfirmasi.</p></div><div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="font-extrabold text-slate-900">iPhone / Safari</p><p className="mt-1">Tekan tombol Bagikan, pilih <b>Add to Home Screen</b>, lalu tekan Add.</p></div><div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="font-extrabold text-slate-900">Desktop / Chrome atau Edge</p><p className="mt-1">Gunakan ikon Install di sisi kanan address bar, atau buka menu browser lalu pilih <b>Install Anton Service POS</b>.</p></div></div><button onClick={() => setInstallHelpOpen(false)} className="btn-press mt-5 w-full rounded-xl bg-slate-900 py-3 text-xs font-extrabold text-white">Tutup panduan</button>
     </Modal>
-    {receipt && <ReceiptOverlay transaction={receipt} printer={printer} logo={logo} onClose={() => setReceipt(null)} />}
-  </div>;
-}
+    {receipt && (
+  <ReceiptOverlay
+    transaction={receipt}
+    printer={printer}
+    logo={logo}
+    onClose={() => setReceipt(null)}
+    onPrint={printReceiptNative}
+    printerBusy={printerBusy}
+  />
+)}
 
 function MetricCard({ label, value, caption, accent }: { label: string; value: string; caption: string; accent: "red" | "charcoal" | "rose" | "blue" }) { const colors = { red: "border-t-[3px] border-t-[#c7362f]", charcoal: "border-t-[3px] border-t-slate-800", rose: "border-t-[3px] border-t-[#c7362f]", blue: "border-t-[3px] border-t-blue-700" }; return <div className={cn("app-card border bg-white p-4", colors[accent])}><p className="panel-label mono">{label}</p><p className="metric-value mono mt-2 truncate">{value}</p><p className="mt-2 text-[10px] font-semibold text-slate-500">{caption}</p></div>; }
 function BalanceQuickCard({ assetTotal, liabilityTotal, equityTotal, netIncome, totalLiabilityEquity, difference }: { assetTotal: number; liabilityTotal: number; equityTotal: number; netIncome: number; totalLiabilityEquity: number; difference: number }) { return <div className="app-card p-5"><div className="flex items-start justify-between"><div><p className="panel-label">Kontrol cepat</p><h2 className="mt-1 font-extrabold">Neraca ringkas</h2></div><Scale size={18} className="text-slate-400" /></div><div className="mt-5 space-y-2.5"><Row label="Aktiva" value={formatCurrency(assetTotal)} /><Row label="Pasiva (Hutang)" value={formatCurrency(liabilityTotal)} /><Row label="Modal" value={formatCurrency(equityTotal)} /><Row label="Laba" value={formatCurrency(netIncome)} valueClass={netIncome >= 0 ? "text-emerald-600" : "text-red-600"} /><div className="border-t border-slate-200 pt-2.5"><Row label="Total Pasiva" value={formatCurrency(totalLiabilityEquity)} strong /></div></div><div className={cn("mt-4 flex items-center justify-between rounded-xl border-2 p-3", difference === 0 ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-red-400 bg-red-50 text-red-700")}><span className="text-xs font-extrabold">SELISIH</span><span className="text-sm font-extrabold">{formatCurrency(difference)}</span></div><p className="mt-2 text-[10px] font-semibold text-slate-500">{difference === 0 ? "Balance — posisi seimbang" : "Tidak balance, cek data transaksi"}</p></div>; }
@@ -1096,7 +1101,7 @@ function ReceiptOverlay({
   onPrint,
   printerBusy,
 }: {
-  transaction: Transaction;h
+  transaction: Transaction;
   printer: PrinterSettings;
   logo: string;
   onClose: () => void;
