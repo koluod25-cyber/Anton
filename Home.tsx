@@ -557,6 +557,300 @@ export default function Home() {
     address: string;
   }[]
 >([]);  
+  const searchBluetoothPrinters = async () => {
+  try {
+    setPrinterBusy(true);
+
+  const result =
+      await BluetoothPrinterBridge.listPairedPrinters();
+
+    const printers = result.printers || [];
+
+    setPairedPrinters(printers);
+
+    if (!printers.length) {
+      toast.info(
+        "Tidak ada printer Bluetooth yang sudah dipasangkan."
+      );
+
+      return;
+    }
+
+    const preferred =
+      printers.find((item) =>
+        item.name
+          ?.toUpperCase()
+          .includes("POS-58B")
+      ) || printers[0];
+
+    setPrinter((previous) => ({
+      ...previous,
+
+      connection: "Bluetooth",
+
+      bluetoothName:
+        preferred.name,
+
+      bluetoothAddress:
+        preferred.address,
+    }));
+
+    toast.success(
+      `Printer dipilih: ${preferred.name}`
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    toast.error(
+      "Gagal membaca printer Bluetooth. Pastikan izin Bluetooth diberikan."
+    );
+
+  } finally {
+
+    setPrinterBusy(false);
+  }
+};  
+  const testBluetoothPrinter = async () => {
+
+  if (!printer.bluetoothAddress) {
+
+    toast.error(
+      "Pilih printer Bluetooth terlebih dahulu."
+    );
+
+    return;
+  }
+
+  try {
+
+    setPrinterBusy(true);
+
+    const result =
+      await BluetoothPrinterBridge.testConnection({
+        address:
+          printer.bluetoothAddress,
+      });
+
+    if (result.success) {
+
+      toast.success(
+        `Bluetooth terhubung: ${
+          printer.bluetoothName ||
+          "Printer"
+        }`
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    toast.error(
+      "Printer Bluetooth tidak dapat terhubung."
+    );
+
+  } finally {
+
+    setPrinterBusy(false);
+  }
+};
+   const testWifiPrinter = async () => {
+
+  if (!printer.wifiHost.trim()) {
+
+    toast.error(
+      "Masukkan IP printer Wi-Fi."
+    );
+
+    return;
+  }
+
+  try {
+
+    setPrinterBusy(true);
+
+    const result =
+      await BluetoothPrinterBridge.testWifi({
+        host:
+          printer.wifiHost.trim(),
+
+        port:
+          printer.wifiPort || 9100,
+      });
+
+    if (result.success) {
+
+      toast.success(
+        `Printer Wi-Fi terhubung: ${
+          printer.wifiHost
+        }:${
+          printer.wifiPort || 9100
+        }`
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    toast.error(
+      "Printer Wi-Fi tidak dapat terhubung."
+    );
+
+  } finally {
+
+    setPrinterBusy(false);
+  }
+};
+  const printReceiptNative = async (
+  transaction: Transaction
+) => {
+
+  /*
+   * MODE SYSTEM
+   *
+   * Tetap mempertahankan window.print()
+   * untuk printer/system print A4.
+   */
+  if (printer.connection === "System") {
+
+    window.print();
+
+    return;
+  }
+
+  try {
+
+    setPrinterBusy(true);
+
+    /*
+     * BLUETOOTH
+     */
+    if (
+      printer.connection ===
+      "Bluetooth"
+    ) {
+
+      if (
+        !printer.bluetoothAddress
+      ) {
+
+        toast.error(
+          "Pilih printer Bluetooth terlebih dahulu."
+        );
+
+        return;
+      }
+    }
+
+    /*
+     * WI-FI
+     */
+    if (
+      printer.connection ===
+      "WiFi"
+    ) {
+
+      if (
+        !printer.wifiHost.trim()
+      ) {
+
+        toast.error(
+          "Masukkan IP printer Wi-Fi terlebih dahulu."
+        );
+
+        return;
+      }
+    }
+
+    /*
+     * BUAT TEKS STRUK
+     */
+    const content =
+      buildReceiptText(
+        transaction,
+        printer
+      );
+
+    /*
+     * KIRIM KE ANDROID NATIVE
+     */
+    const result =
+      await BluetoothPrinterBridge.print({
+
+        connection:
+          printer.connection ===
+          "WiFi"
+            ? "WiFi"
+            : "Bluetooth",
+
+        address:
+          printer.connection ===
+          "Bluetooth"
+            ? printer.bluetoothAddress
+            : undefined,
+
+        host:
+          printer.connection ===
+          "WiFi"
+            ? printer.wifiHost.trim()
+            : undefined,
+
+        port:
+          printer.connection ===
+          "WiFi"
+            ? printer.wifiPort || 9100
+            : undefined,
+
+        copies: Math.max(
+          1,
+          Math.min(
+            20,
+            printer.copies || 1
+          )
+        ),
+
+        paperWidth:
+          printer.size,
+
+        content,
+      });
+
+    if (result.success) {
+
+      toast.success(
+        `Cetak berhasil: ${
+          printer.copies || 1
+        } salinan`
+      );
+
+    } else {
+
+      toast.error(
+        "Printer tidak menerima data."
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      "PRINT ERROR:",
+      error
+    );
+
+    toast.error(
+      "Cetak gagal. Periksa koneksi printer."
+    );
+
+  } finally {
+
+    setPrinterBusy(false);
+  }
+};
   const [logo, setLogo] = useState<string>(() => { const stored = readStored<string>("anton_logo_v22", MARK_URL); return stored.includes("anton-service-mark_") ? MARK_URL : stored; });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState("Umum");
@@ -802,7 +1096,7 @@ function ReceiptOverlay({
   onPrint,
   printerBusy,
 }: {
-  transaction: Transaction;
+  transaction: Transaction;h
   printer: PrinterSettings;
   logo: string;
   onClose: () => void;
