@@ -197,8 +197,6 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
   const settlementTotal = transactionSettlementTotal(transaction);
   const outstanding = transactionReceivableOutstanding(transaction);
 
-  const paidAtSale = p.cash + p.transfer + p.qris;
-
   const change = Math.max(
     0,
     transaction.change || Math.max(0, paidAtSale - transaction.total)
