@@ -1335,18 +1335,6 @@ function ReceiptOverlay({
               </div>
             )}
 
-            {/* PIUTANG */}
-            {payments.piutang > 0 && (
-              <div className="flex justify-between">
-                <span>Piutang</span>
-                <span>
-                  {formatCurrency(
-                    payments.piutang
-                  )}
-                </span>
-              </div>
-            )}
-
             {/* JUMLAH PEMBAYARAN */}
             <div className="mt-1 flex justify-between font-extrabold">
               <span>
