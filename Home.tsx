@@ -199,13 +199,6 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
 
   const change = Math.max(0, transaction.change || 0);
 
-summary.cash += Math.max(
-  0,
-  p.cash - change
-) + (transaction.settlements || [])
-  .filter(x => x.method === "Cash")
-  .reduce((a, x) => a + x.amount, 0);
-
   const width =
     printer.size === "58mm" ? 32 :
     printer.size === "80mm" ? 48 : 80;
@@ -326,7 +319,6 @@ export const summarizeTransactionTotals = (transactions: Transaction[]) => trans
 ) + (transaction.settlements || [])
   .filter(x => x.method === "Cash")
   .reduce((a, x) => a + x.amount, 0);
-  0,
   summary.bank += p.transfer + p.qris + (transaction.settlements || []).filter(x => x.method !== "Cash").reduce((a,x) => a + x.amount, 0);
   summary.receivables += Math.max(0, p.piutang - transactionSettlementTotal(transaction));
   return summary;
