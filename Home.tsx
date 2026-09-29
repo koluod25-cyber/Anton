@@ -218,7 +218,11 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
     const maxLabel = Math.max(1, width - value.length - 1);
     return `${label.slice(0, maxLabel).padEnd(maxLabel)} ${value}`;
   };
-
+// Amount actually allocated to this sale; change is never counted as payment.
+const paymentAmount = Math.min(
+  transaction.total,
+  Math.max(0, p.cash + p.transfer + p.qris + p.piutang)
+);
   const paymentLines = [
     p.cash > 0 ? row("Cash", money(p.cash)) : "",
     p.transfer > 0 ? row("Transfer", money(p.transfer)) : "",
