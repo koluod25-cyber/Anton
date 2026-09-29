@@ -63,7 +63,7 @@ export function handleAppInstalled(setPrompt: (prompt: InstallPromptEvent | null
   closeHelp();
   notify();
 }
-const MARK_URL = "/manus-storage/anton-original-logo_03fc6b01.jpg";
+const MARK_URL = "/icons/anton-service-pos.png";
 const DASHBOARD_IMAGE = "/manus-storage/anton-dashboard-service_6c7f52e8.jpg";
 const RECEIPT_IMAGE = "/manus-storage/anton-receipt-paper_538396f1.jpg";
 const INVENTORY_IMAGE = "/manus-storage/anton-inventory-shelf_39d295b4.jpg";
@@ -1331,35 +1331,25 @@ function ReceiptOverlay({
     <div className="fixed inset-0 z-[90] overflow-auto bg-white p-5">
       <div className={cn("mx-auto", width)}>
 
-        {/* TOMBOL */}
-        <div className="no-print mb-5 flex justify-between gap-3">
+         {/* TOMBOL */}
+<div className="no-print mb-5 flex justify-between gap-3">
+  <button
+    onClick={onClose}
+    className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-extrabold"
+  >
+    <X size={15} />
+    Tutup
+  </button>
 
-          <Button
-  type="button"
-  variant={printer.connection === "USB" ? "default" : "outline"}
-  onClick={() => {
-
-          <button
-            onClick={onClose}
-            className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-extrabold"
-          >
-            <X size={15} />
-            Tutup
-          </button>
-
-          <button
-            onClick={() => onPrint(transaction)}
-            disabled={printerBusy}
-            className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Printer size={15} />
-
-            {printerBusy
-              ? "Menghubungkan..."
-              : "Cetak-Preview"}
-          </button>
-
-        </div>
+  <button
+    onClick={() => onPrint(transaction)}
+    disabled={printerBusy}
+    className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    <Printer size={15} />
+    {printerBusy ? "Menghubungkan..." : "Cetak-Preview"}
+  </button>
+</div>
 
         {/* ISI STRUK */}
         <div
