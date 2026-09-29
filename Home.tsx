@@ -197,9 +197,14 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
   const settlementTotal = transactionSettlementTotal(transaction);
   const outstanding = transactionReceivableOutstanding(transaction);
 
-  const change = Math.max(
-    0,
   const change = Math.max(0, transaction.change || 0);
+
+summary.cash += Math.max(
+  0,
+  p.cash - change
+) + (transaction.settlements || [])
+  .filter(x => x.method === "Cash")
+  .reduce((a, x) => a + x.amount, 0);
 
   const width =
     printer.size === "58mm" ? 32 :
