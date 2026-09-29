@@ -1277,9 +1277,24 @@ function ReceiptOverlay({
               PEMBAYARAN
             </p>
 
-            <p>
+             <p>
               {transactionPaymentLabel(transaction)}
             </p>
+            <p className="font-extrabold">
+  JUMLAH PEMBAYARAN:{" "}
+  {formatCurrency(
+    Math.min(
+      transaction.total,
+      Math.max(
+        0,
+        normalizeTransactionPayments(transaction).cash +
+        normalizeTransactionPayments(transaction).transfer +
+        normalizeTransactionPayments(transaction).qris +
+        normalizeTransactionPayments(transaction).piutang
+      )
+    )
+  )}
+</p>
 
             {settlementTotal > 0 && (
               <p>
