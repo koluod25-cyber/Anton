@@ -1351,6 +1351,8 @@ function ReceiptOverlay({
   </button>
 </div>
 
+{/* ISI STRUK */}
+
         {/* ISI STRUK */}
         <div
           className={cn(
