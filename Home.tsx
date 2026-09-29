@@ -221,7 +221,7 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
 // Amount actually allocated to this sale; change is never counted as payment.
 const paymentAmount = Math.min(
   transaction.total,
-  Math.max(0, p.cash + p.transfer + p.qris + p.piutang)
+  Math.max(0, p.cash + p.transfer + p.qris)
 );
   const paymentLines = [
     p.cash > 0 ? row("Cash", money(p.cash)) : "",
@@ -1127,8 +1127,7 @@ function ReceiptOverlay({
       0,
       payments.cash +
         payments.transfer +
-        payments.qris +
-        payments.piutang
+        payments.qris
     )
   );
 
