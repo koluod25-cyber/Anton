@@ -326,6 +326,7 @@ export const summarizeTransactionTotals = (transactions: Transaction[]) => trans
 ) + (transaction.settlements || [])
   .filter(x => x.method === "Cash")
   .reduce((a, x) => a + x.amount, 0);
+  0,
   summary.bank += p.transfer + p.qris + (transaction.settlements || []).filter(x => x.method !== "Cash").reduce((a,x) => a + x.amount, 0);
   summary.receivables += Math.max(0, p.piutang - transactionSettlementTotal(transaction));
   return summary;
