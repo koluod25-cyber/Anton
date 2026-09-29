@@ -1119,14 +1119,31 @@ function ReceiptOverlay({
         ? "max-w-[430px]"
         : "max-w-3xl";
 
+  const payments = normalizeTransactionPayments(transaction);
+
+  const paymentAmount = Math.min(
+    transaction.total,
+    Math.max(
+      0,
+      payments.cash +
+        payments.transfer +
+        payments.qris +
+        payments.piutang
+    )
+  );
+
   const outstanding = transactionReceivableOutstanding(transaction);
-  const settlementTotal = transactionSettlementTotal(transaction);
+
+  const change = Math.max(
+    0,
+    transaction.change || 0
+  );
 
   return (
     <div className="fixed inset-0 z-[90] overflow-auto bg-white p-5">
       <div className={cn("mx-auto", width)}>
 
-        {/* TOMBOL RECEIPT OVERLAY */}
+        {/* TOMBOL */}
         <div className="no-print mb-5 flex justify-between gap-3">
 
           <button
@@ -1159,6 +1176,7 @@ function ReceiptOverlay({
           )}
         >
 
+          {/* LOGO */}
           {printer.showLogo && (
             <img
               src={logo}
@@ -1189,6 +1207,7 @@ function ReceiptOverlay({
 
           <hr className="my-3 border-dashed border-slate-500" />
 
+          {/* INFORMASI TRANSAKSI */}
           <p>
             No: {transaction.noNota}
             <br />
@@ -1219,30 +1238,39 @@ function ReceiptOverlay({
               </span>
 
               <span className="shrink-0 font-bold">
-                {formatCurrency(item.price * item.qty)}
+                {formatCurrency(
+                  item.price * item.qty
+                )}
               </span>
             </div>
-          )}
+          ))}
 
           <hr className="my-3 border-dashed border-slate-500" />
 
-          {/* RINGKASAN TRANSAKSI */}
+          {/* RINGKASAN */}
           <div className="flex justify-between">
             <span>Subtotal</span>
             <span>
-              {formatCurrency(transaction.subtotal)}
+              {formatCurrency(
+                transaction.subtotal
+              )}
             </span>
           </div>
 
           <div className="flex justify-between">
             <span>Diskon</span>
             <span>
-              −{formatCurrency(transaction.discount)}
+              −{formatCurrency(
+                transaction.discount
+              )}
             </span>
           </div>
 
           <div className="flex justify-between">
-            <span>Pajak {transaction.tax}%</span>
+            <span>
+              Pajak {transaction.tax}%
+            </span>
+
             <span>
               {formatCurrency(
                 calculateTransactionAmounts(
@@ -1256,8 +1284,11 @@ function ReceiptOverlay({
 
           <div className="mt-1 flex justify-between text-sm font-extrabold">
             <span>TOTAL</span>
+
             <span>
-              {formatCurrency(transaction.total)}
+              {formatCurrency(
+                transaction.total
+              )}
             </span>
           </div>
 
@@ -1265,40 +1296,99 @@ function ReceiptOverlay({
           <div className="my-3 rounded-lg border border-slate-300 bg-white p-2">
 
             <p className="font-extrabold">
-              PEMBAYARAN
+              PEMBAYARAN:
             </p>
 
-             <p>
-              {transactionPaymentLabel(transaction)}
-            </p>
-            <p className="font-extrabold">
-  JUMLAH PEMBAYARAN:{" "}
-  {formatCurrency(
-    Math.min(
-      transaction.total,
-      Math.max(
-        0,
-        normalizeTransactionPayments(transaction).cash +
-        normalizeTransactionPayments(transaction).transfer +
-        normalizeTransactionPayments(transaction).qris +
-        normalizeTransactionPayments(transaction).piutang
-      )
-    )
-  )}
-</p>
+            {/* CASH */}
+            {payments.cash > 0 && (
+              <div className="flex justify-between">
+                <span>Cash</span>
+                <span>
+                  {formatCurrency(
+                    payments.cash
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* TRANSFER */}
+            {payments.transfer > 0 && (
+              <div className="flex justify-between">
+                <span>Transfer</span>
+                <span>
+                  {formatCurrency(
+                    payments.transfer
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* QRIS */}
+            {payments.qris > 0 && (
+              <div className="flex justify-between">
+                <span>QRIS</span>
+                <span>
+                  {formatCurrency(
+                    payments.qris
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* PIUTANG */}
+            {payments.piutang > 0 && (
+              <div className="flex justify-between">
+                <span>Piutang</span>
+                <span>
+                  {formatCurrency(
+                    payments.piutang
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* JUMLAH PEMBAYARAN */}
+            <div className="mt-1 flex justify-between font-extrabold">
+              <span>
+                JUMLAH PEMBAYARAN
+              </span>
+
+              <span>
+                {formatCurrency(
+                  paymentAmount
+                )}
+              </span>
+            </div>
 
             {/* STATUS */}
-            <p className="mt-1 font-extrabold">
+            <p className="mt-2 font-extrabold">
+              STATUS:{" "}
               {outstanding > 0
-                ? "STATUS: BELUM LUNAS"
-                : "STATUS: LUNAS"}
+                ? "BELUM LUNAS"
+                : "LUNAS"}
             </p>
 
+            {/* KEMBALIAN */}
+            <div className="flex justify-between font-extrabold">
+              <span>KEMBALIAN</span>
+
+              <span>
+                {formatCurrency(change)}
+              </span>
+            </div>
+
             {/* SISA */}
-            <p className="font-extrabold">
-              SISA YANG HARUS DIBAYAR:{" "}
-              {formatCurrency(outstanding)}
-            </p>
+            <div className="flex justify-between font-extrabold">
+              <span>
+                SISA YANG HARUS DIBAYAR
+              </span>
+
+              <span>
+                {formatCurrency(
+                  outstanding
+                )}
+              </span>
+            </div>
 
           </div>
 
@@ -1313,6 +1403,7 @@ function ReceiptOverlay({
 
           {/* BARCODE */}
           <div className="mt-4 rounded-lg bg-white p-2">
+
             <p className="text-center text-[10px] font-extrabold">
               GARANSI: {transaction.warrantyCode}
             </p>
@@ -1326,10 +1417,11 @@ function ReceiptOverlay({
               alt={`Barcode garansi ${transaction.warrantyCode}`}
               className="mx-auto mt-1 h-[58px] w-[220px]"
             />
+
           </div>
 
         </div>
       </div>
     </div>
   );
-              }
+                  }
