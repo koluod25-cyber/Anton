@@ -1338,14 +1338,6 @@ function ReceiptOverlay({
   type="button"
   variant={printer.connection === "USB" ? "default" : "outline"}
   onClick={() => {
-    setPrinter((previous) => ({
-      ...previous,
-      connection: "USB",
-    }));
-  }}
->
-  USB / OTG
-</Button>
 
           <button
             onClick={onClose}
