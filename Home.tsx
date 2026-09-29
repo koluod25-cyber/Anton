@@ -1284,7 +1284,8 @@ function ReceiptOverlay({
         normalizeTransactionPayments(transaction).piutang
       )
     )
-
+  )}
+</p>
 
             {/* STATUS */}
             <p className="mt-1 font-extrabold">
