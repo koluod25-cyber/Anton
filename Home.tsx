@@ -969,13 +969,6 @@ productId:
     setPrinterBusy(false);
   }
 };
-    {printer.connection === "USB" && (
-  <div className="space-y-3">
-    <Button
-      type="button"
-      onClick={searchUsbPrinters}
-      disabled={printerBusy}
-    >
       {printerBusy ? "Mencari..." : "Cari Printer USB / OTG"}
     </Button>
 
