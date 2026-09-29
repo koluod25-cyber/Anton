@@ -320,7 +320,12 @@ export const transactionRevenueNet = (transaction: Partial<Pick<Transaction, "su
 export const summarizeTransactionTotals = (transactions: Transaction[]) => transactions.reduce((summary, transaction) => {
   const revenue = transactionRevenueBreakdown(transaction); const p = normalizeTransactionPayments(transaction);
   summary.serviceRevenue += revenue.serviceGross; summary.spareRevenue += revenue.spareGross; summary.serviceNetRevenue += revenue.serviceNet; summary.spareNetRevenue += revenue.spareNet; summary.hpp += transaction.hppTotal || 0; summary.salesDiscount -= revenue.effectiveDiscount; summary.taxPayable += calculateTransactionAmounts(transaction.subtotal || 0, transaction.discount || 0, transaction.tax || 0).taxAmount; summary.expenseTotal += transactionExpenseNet(transaction);
-  summary.cash += p.cash + (transaction.settlements || []).filter(x => x.method === "Cash").reduce((a,x) => a + x.amount, 0);
+  summary.cash += Math.max(
+  0,
+  p.cash - Math.max(0, transaction.change || 0)
+) + (transaction.settlements || [])
+  .filter(x => x.method === "Cash")
+  .reduce((a, x) => a + x.amount, 0);
   summary.bank += p.transfer + p.qris + (transaction.settlements || []).filter(x => x.method !== "Cash").reduce((a,x) => a + x.amount, 0);
   summary.receivables += Math.max(0, p.piutang - transactionSettlementTotal(transaction));
   return summary;
