@@ -34,7 +34,7 @@ export function removeCustomAccount(previous: Account[], code: string) {
 type PrinterSettings = {
   size: "58mm" | "80mm" | "A4";
 
-  connection: "Bluetooth" | "WiFi" | "System";
+  connection: "Bluetooth" | "WiFi" | "USB" | "System";
 
   bluetoothName: string;
   bluetoothAddress: string;
@@ -552,9 +552,105 @@ export default function Home() {
     address: string;
   }[]
 >([]);  
+  const [usbPrinters, setUsbPrinters] = useState<
+  {
+    deviceId: number;
+    vendorId: number;
+    productId: number;
+    name: string;
+    productName?: string;
+    manufacturerName?: string;
+  }[]
+>([]);
+
+  const [selectedUsbPrinter, setSelectedUsbPrinter] = useState<{
+    deviceId: number;
+    vendorId: number;
+    productId: number;
+    name: string;
+  } | null>(null);
+    
   const searchBluetoothPrinters = async () => {
   try {
+    const searchUsbPrinters = async () => {
+  try {
     setPrinterBusy(true);
+
+    const result = await BluetoothPrinterBridge.listUsbPrinters();
+    const printers = result.printers || [];
+
+    setUsbPrinters(printers);
+
+    if (!printers.length) {
+      toast.info(
+        "Tidak ada printer USB/OTG terdeteksi. Pastikan OTG aktif dan printer tersambung."
+      );
+      return;
+    }
+
+    // Pilih printer pertama hanya sebagai pilihan awal.
+    // Pengguna tetap dapat memilih printer lain dari daftar.
+    const firstPrinter = printers[0];
+
+    setSelectedUsbPrinter({
+      deviceId: firstPrinter.deviceId,
+      vendorId: firstPrinter.vendorId,
+      productId: firstPrinter.productId,
+      name: firstPrinter.name,
+    });
+
+    setPrinter((previous) => ({
+      ...previous,
+      connection: "USB",
+    }));
+
+    toast.success(`Ditemukan ${printers.length} perangkat USB/OTG.`);
+  } catch (error) {
+    console.error("USB printer search error:", error);
+
+    toast.error(
+      "Gagal membaca printer USB/OTG. Pastikan OTG aktif dan izin USB diberikan."
+    );
+  } finally {
+    setPrinterBusy(false);
+  }
+};
+    setPrinterBusy(true);
+    const testUsbPrinter = async (device: {
+  deviceId: number;
+  vendorId: number;
+  productId: number;
+  name: string;
+}) => {
+  try {
+    setPrinterBusy(true);
+
+    const result = await BluetoothPrinterBridge.testUsb({
+      deviceId: device.deviceId,
+      vendorId: device.vendorId,
+      productId: device.productId,
+    });
+
+    if (result.success) {
+      setSelectedUsbPrinter(device);
+
+      setPrinter((previous) => ({
+        ...previous,
+        connection: "USB",
+      }));
+
+      toast.success(`Printer USB/OTG siap: ${device.name}`);
+    }
+  } catch (error) {
+    console.error("USB printer test error:", error);
+
+    toast.error(
+      "Printer USB/OTG belum dapat diakses. Izinkan akses USB lalu coba lagi."
+    );
+  } finally {
+    setPrinterBusy(false);
+  }
+};
 
   const result =
       await BluetoothPrinterBridge.listPairedPrinters();
@@ -778,28 +874,41 @@ export default function Home() {
       await BluetoothPrinterBridge.print({
 
         connection:
-          printer.connection ===
-          "WiFi"
-            ? "WiFi"
-            : "Bluetooth",
+  printer.connection === "WiFi"
+    ? "WiFi"
+    : printer.connection === "USB"
+      ? "USB"
+      : "Bluetooth",
 
-        address:
-          printer.connection ===
-          "Bluetooth"
-            ? printer.bluetoothAddress
-            : undefined,
+address:
+  printer.connection === "Bluetooth"
+    ? printer.bluetoothAddress
+    : undefined,
 
-        host:
-          printer.connection ===
-          "WiFi"
-            ? printer.wifiHost.trim()
-            : undefined,
+host:
+  printer.connection === "WiFi"
+    ? printer.wifiHost.trim()
+    : undefined,
 
-        port:
-          printer.connection ===
-          "WiFi"
-            ? printer.wifiPort || 9100
-            : undefined,
+port:
+  printer.connection === "WiFi"
+    ? printer.wifiPort || 9100
+    : undefined,
+
+deviceId:
+  printer.connection === "USB"
+    ? selectedUsbPrinter?.deviceId
+    : undefined,
+
+vendorId:
+  printer.connection === "USB"
+    ? selectedUsbPrinter?.vendorId
+    : undefined,
+
+productId:
+  printer.connection === "USB"
+    ? selectedUsbPrinter?.productId
+    : undefined,
 
         copies: Math.max(
           1,
@@ -846,6 +955,85 @@ export default function Home() {
     setPrinterBusy(false);
   }
 };
+    {printer.connection === "USB" && (
+  <div className="space-y-3">
+    <Button
+      type="button"
+      onClick={searchUsbPrinters}
+      disabled={printerBusy}
+    >
+      {printerBusy ? "Mencari..." : "Cari Printer USB / OTG"}
+    </Button>
+
+    {usbPrinters.length > 0 && (
+      <div className="space-y-2">
+        {usbPrinters.map((device) => {
+          const selected =
+            selectedUsbPrinter?.deviceId === device.deviceId;
+
+          return (
+            <div
+              key={`${device.deviceId}-${device.vendorId}-${device.productId}`}
+              className={`rounded-lg border p-3 ${
+                selected ? "border-primary" : ""
+              }`}
+            >
+              <div className="font-medium">
+                {device.name || "USB Printer"}
+              </div>
+
+              {device.productName && (
+                <div className="text-sm text-muted-foreground">
+                  {device.productName}
+                </div>
+              )}
+
+              <div className="text-xs text-muted-foreground">
+                Device ID: {device.deviceId} · Vendor ID: {device.vendorId} ·
+                Product ID: {device.productId}
+              </div>
+
+              <div className="mt-2 flex gap-2">
+                <Button
+                  type="button"
+                  variant={selected ? "default" : "outline"}
+                  onClick={() =>
+                    setSelectedUsbPrinter({
+                      deviceId: device.deviceId,
+                      vendorId: device.vendorId,
+                      productId: device.productId,
+                      name: device.name,
+                    })
+                  }
+                >
+                  {selected ? "Dipilih" : "Pilih"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => testUsbPrinter({
+                    deviceId: device.deviceId,
+                    vendorId: device.vendorId,
+                    productId: device.productId,
+                    name: device.name,
+                  })}
+                  disabled={printerBusy}
+                >
+                  Tes
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+)}
+    if (printer.connection === "USB" && !selectedUsbPrinter) {
+  toast.error("Cari dan pilih printer USB/OTG terlebih dahulu.");
+  return;
+    }
   const [logo, setLogo] = useState<string>(() => { const stored = readStored<string>("anton_logo_v22", MARK_URL); return stored.includes("anton-service-mark_") ? MARK_URL : stored; });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState("Umum");
@@ -1144,6 +1332,19 @@ function ReceiptOverlay({
 
         {/* TOMBOL */}
         <div className="no-print mb-5 flex justify-between gap-3">
+
+          <Button
+  type="button"
+  variant={printer.connection === "USB" ? "default" : "outline"}
+  onClick={() => {
+    setPrinter((previous) => ({
+      ...previous,
+      connection: "USB",
+    }));
+  }}
+>
+  USB / OTG
+</Button>
 
           <button
             onClick={onClose}
