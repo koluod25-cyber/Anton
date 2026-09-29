@@ -545,23 +545,23 @@ export default function Home() {
   const [customAccounts, setCustomAccounts] = useState<Account[]>(() => readStored("anton_coa_v22", []));
   const [printer, setPrinter] = useState<PrinterSettings>(() => ({ ...defaultPrinter, ...readStored<Partial<PrinterSettings>>("anton_printer_v22", {}) }));
   const [printerBusy, setPrinterBusy] = useState(false);
-
   const [pairedPrinters, setPairedPrinters] = useState<
-  {
-    name: string;
-    address: string;
-  }[]
->([]);  
+    {
+      name: string;
+      address: string;
+    }[]
+  >([]);
+
   const [usbPrinters, setUsbPrinters] = useState<
-  {
-    deviceId: number;
-    vendorId: number;
-    productId: number;
-    name: string;
-    productName?: string;
-    manufacturerName?: string;
-  }[]
->([]);
+    {
+      deviceId: number;
+      vendorId: number;
+      productId: number;
+      name: string;
+      productName?: string;
+      manufacturerName?: string;
+    }[]
+  >([]);
 
   const [selectedUsbPrinter, setSelectedUsbPrinter] = useState<{
     deviceId: number;
@@ -569,140 +569,141 @@ export default function Home() {
     productId: number;
     name: string;
   } | null>(null);
-    
+
   const searchBluetoothPrinters = async () => {
-  try {
-    const searchUsbPrinters = async () => {
-  try {
-    setPrinterBusy(true);
+    try {
+      setPrinterBusy(true);
 
-    const result = await BluetoothPrinterBridge.listUsbPrinters();
-    const printers = result.printers || [];
+      const result =
+        await BluetoothPrinterBridge.listPairedPrinters();
 
-    setUsbPrinters(printers);
+      const printers = result.printers || [];
 
-    if (!printers.length) {
-      toast.info(
-        "Tidak ada printer USB/OTG terdeteksi. Pastikan OTG aktif dan printer tersambung."
+      setPairedPrinters(printers);
+
+      if (!printers.length) {
+        toast.info(
+          "Tidak ada printer Bluetooth yang sudah dipasangkan."
+        );
+        return;
+      }
+
+      const preferred =
+        printers.find((item) =>
+          item.name?.toUpperCase().includes("POS-58B")
+        ) || printers[0];
+
+      setPrinter((previous) => ({
+        ...previous,
+        connection: "Bluetooth",
+        bluetoothName: preferred.name,
+        bluetoothAddress: preferred.address,
+      }));
+
+      toast.success(
+        `Printer dipilih: ${preferred.name}`
       );
-      return;
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        "Gagal membaca printer Bluetooth. Pastikan izin Bluetooth diberikan."
+      );
+    } finally {
+      setPrinterBusy(false);
     }
+  };
 
-    // Pilih printer pertama hanya sebagai pilihan awal.
-    // Pengguna tetap dapat memilih printer lain dari daftar.
-    const firstPrinter = printers[0];
+  const searchUsbPrinters = async () => {
+    try {
+      setPrinterBusy(true);
 
-    setSelectedUsbPrinter({
-      deviceId: firstPrinter.deviceId,
-      vendorId: firstPrinter.vendorId,
-      productId: firstPrinter.productId,
-      name: firstPrinter.name,
-    });
+      const result =
+        await BluetoothPrinterBridge.listUsbPrinters();
 
-    setPrinter((previous) => ({
-      ...previous,
-      connection: "USB",
-    }));
+      const printers = result.printers || [];
 
-    toast.success(`Ditemukan ${printers.length} perangkat USB/OTG.`);
-  } catch (error) {
-    console.error("USB printer search error:", error);
+      setUsbPrinters(printers);
 
-    toast.error(
-      "Gagal membaca printer USB/OTG. Pastikan OTG aktif dan izin USB diberikan."
-    );
-  } finally {
-    setPrinterBusy(false);
-  }
-};
-    setPrinterBusy(true);
-    const testUsbPrinter = async (device: {
-  deviceId: number;
-  vendorId: number;
-  productId: number;
-  name: string;
-}) => {
-  try {
-    setPrinterBusy(true);
+      if (!printers.length) {
+        toast.info(
+          "Tidak ada printer USB/OTG terdeteksi. Pastikan OTG aktif dan printer tersambung."
+        );
+        return;
+      }
 
-    const result = await BluetoothPrinterBridge.testUsb({
-      deviceId: device.deviceId,
-      vendorId: device.vendorId,
-      productId: device.productId,
-    });
+      const firstPrinter = printers[0];
 
-    if (result.success) {
-      setSelectedUsbPrinter(device);
+      setSelectedUsbPrinter({
+        deviceId: firstPrinter.deviceId,
+        vendorId: firstPrinter.vendorId,
+        productId: firstPrinter.productId,
+        name: firstPrinter.name,
+      });
 
       setPrinter((previous) => ({
         ...previous,
         connection: "USB",
       }));
 
-      toast.success(`Printer USB/OTG siap: ${device.name}`);
-    }
-  } catch (error) {
-    console.error("USB printer test error:", error);
-
-    toast.error(
-      "Printer USB/OTG belum dapat diakses. Izinkan akses USB lalu coba lagi."
-    );
-  } finally {
-    setPrinterBusy(false);
-  }
-};
-
-  const result =
-      await BluetoothPrinterBridge.listPairedPrinters();
-
-    const printers = result.printers || [];
-
-    setPairedPrinters(printers);
-
-    if (!printers.length) {
-      toast.info(
-        "Tidak ada printer Bluetooth yang sudah dipasangkan."
+      toast.success(
+        `Ditemukan ${printers.length} perangkat USB/OTG.`
+      );
+    } catch (error) {
+      console.error(
+        "USB printer search error:",
+        error
       );
 
-      return;
+      toast.error(
+        "Gagal membaca printer USB/OTG. Pastikan OTG aktif dan izin USB diberikan."
+      );
+    } finally {
+      setPrinterBusy(false);
     }
+  };
 
-    const preferred =
-      printers.find((item) =>
-        item.name
-          ?.toUpperCase()
-          .includes("POS-58B")
-      ) || printers[0];
+  const testUsbPrinter = async (device: {
+    deviceId: number;
+    vendorId: number;
+    productId: number;
+    name: string;
+  }) => {
+    try {
+      setPrinterBusy(true);
 
-    setPrinter((previous) => ({
-      ...previous,
+      const result =
+        await BluetoothPrinterBridge.testUsb({
+          deviceId: device.deviceId,
+          vendorId: device.vendorId,
+          productId: device.productId,
+        });
 
-      connection: "Bluetooth",
+      if (result.success) {
+        setSelectedUsbPrinter(device);
 
-      bluetoothName:
-        preferred.name,
+        setPrinter((previous) => ({
+          ...previous,
+          connection: "USB",
+        }));
 
-      bluetoothAddress:
-        preferred.address,
-    }));
+        toast.success(
+          `Printer USB/OTG siap: ${device.name}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        "USB printer test error:",
+        error
+      );
 
-    toast.success(
-      `Printer dipilih: ${preferred.name}`
-    );
-
-  } catch (error) {
-
-    console.error(error);
-
-    toast.error(
-      "Gagal membaca printer Bluetooth. Pastikan izin Bluetooth diberikan."
-    );
-
-  } finally {
-
-    setPrinterBusy(false);
-  }
-};  
+      toast.error(
+        "Printer USB/OTG belum dapat diakses. Izinkan akses USB lalu coba lagi."
+      );
+    } finally {
+      setPrinterBusy(false);
+    }
+  };
   const testBluetoothPrinter = async () => {
 
   if (!printer.bluetoothAddress) {
