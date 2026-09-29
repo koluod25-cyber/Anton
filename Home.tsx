@@ -858,6 +858,18 @@ export default function Home() {
         return;
       }
     }
+    /*
+ * USB / OTG
+ */
+if (printer.connection === "USB") {
+  if (!selectedUsbPrinter) {
+    toast.error(
+      "Cari dan pilih printer USB/OTG terlebih dahulu."
+    );
+
+    return;
+  }
+    }
 
     /*
      * BUAT TEKS STRUK
