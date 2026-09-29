@@ -182,11 +182,10 @@ export const transactionPaymentLabel = (transaction: Transaction) => {
   const p = normalizeTransactionPayments(transaction);
 
   const methods = [
-    p.cash > 0 ? `Cash ${formatCurrency(p.cash)}` : "",
-    p.transfer > 0 ? `Transfer ${formatCurrency(p.transfer)}` : "",
-    p.qris > 0 ? `QRIS ${formatCurrency(p.qris)}` : "",
-    p.piutang > 0 ? `Piutang ${formatCurrency(p.piutang)}` : "",
-  ].filter(Boolean);
+  p.cash > 0 ? `Cash ${formatCurrency(p.cash)}` : "",
+  p.transfer > 0 ? `Transfer ${formatCurrency(p.transfer)}` : "",
+  p.qris > 0 ? `QRIS ${formatCurrency(p.qris)}` : "",
+].filter(Boolean);
 
   return methods.length > 0
     ? methods.join(" + ")
@@ -224,7 +223,6 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
     p.cash > 0 ? row("Cash", money(p.cash)) : "",
     p.transfer > 0 ? row("Transfer", money(p.transfer)) : "",
     p.qris > 0 ? row("QRIS", money(p.qris)) : "",
-    p.piutang > 0 ? row("Sisa yang harus dibayar", money(p.piutang)) : "",
   ].filter(Boolean);
 
   const settlementLines =
@@ -274,6 +272,7 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
 
     "PEMBAYARAN:",
     ...paymentLines,
+    row("JUMLAH PEMBAYARAN", money(paymentAmount)),
 
     ...(settlementLines.length
       ? ["PELUNASAN PIUTANG:", ...settlementLines]
