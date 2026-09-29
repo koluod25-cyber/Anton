@@ -229,11 +229,6 @@ const paymentAmount = Math.min(
     p.qris > 0 ? row("QRIS", money(p.qris)) : "",
   ].filter(Boolean);
 
-  const settlementLines =
-    transaction.settlements?.map(
-      item => `${item.method}: ${money(item.amount)}`
-    ) || [];
-
   return [
     center("ANTON SERVICE"),
     center("ELECTRICAL ENGINEERING"),
@@ -277,10 +272,6 @@ const paymentAmount = Math.min(
     "PEMBAYARAN:",
     ...paymentLines,
     row("JUMLAH PEMBAYARAN", money(paymentAmount)),
-
-    ...(settlementLines.length
-      ? ["PELUNASAN PIUTANG:", ...settlementLines]
-      : []),
 
     "",
     row(
@@ -1293,15 +1284,7 @@ function ReceiptOverlay({
         normalizeTransactionPayments(transaction).piutang
       )
     )
-  )}
-</p>
 
-            {settlementTotal > 0 && (
-              <p>
-                Pelunasan Piutang:{" "}
-                {formatCurrency(settlementTotal)}
-              </p>
-            )}
 
             {/* STATUS */}
             <p className="mt-1 font-extrabold">
