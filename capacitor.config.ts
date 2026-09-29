@@ -5,6 +5,11 @@ const config: CapacitorConfig = {
   appName: "Anton Service POS",
   webDir: "dist",
   bundledWebRuntime: false,
+
+  android: {
+    allowMixedContent: true
+  },
+
   server: {
     androidScheme: "https"
   }
