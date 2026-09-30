@@ -30,6 +30,13 @@ jobs:
           java-version: '21'
           cache: gradle
 
+      - name: Verify Java 21
+        run: |
+          echo "=== Java yang dipakai GitHub Actions ==="
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
+          javac -version
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
