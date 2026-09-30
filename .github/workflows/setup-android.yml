@@ -46,6 +46,42 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Configure Android permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          text = manifest.read_text()
+
+          permissions = """\
+          <uses-permission android:name="android.permission.CAMERA" />
+
+          <uses-permission
+              android:name="android.permission.BLUETOOTH"
+              android:maxSdkVersion="30" />
+
+          <uses-permission
+              android:name="android.permission.BLUETOOTH_ADMIN"
+              android:maxSdkVersion="30" />
+
+          <uses-permission
+              android:name="android.permission.BLUETOOTH_SCAN"
+              android:usesPermissionFlags="neverForLocation" />
+
+          <uses-permission
+              android:name="android.permission.BLUETOOTH_CONNECT" />
+
+          <uses-permission android:name="android.permission.INTERNET" />
+          """
+
+          if "android.permission.CAMERA" not in text:
+              text = text.replace("<manifest", "<manifest\n" + permissions, 1)
+
+          manifest.write_text(text)
+          print("Camera dan Bluetooth permissions berhasil ditambahkan.")
+          PY
+
       - name: Install AntonPOS native Android files
         run: |
           mkdir -p android/app/src/main/java/com/antonservice/pos
