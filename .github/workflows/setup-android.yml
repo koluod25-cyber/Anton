@@ -49,6 +49,13 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Configure Java 21 for Gradle
+        run: |
+          echo "org.gradle.java.home=$JAVA_HOME" >> android/gradle.properties
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version
+          javac -version
+
       - name: Verify Android project
         run: |
           echo "=== Memeriksa proyek Android AntonPOS ==="
