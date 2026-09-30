@@ -46,6 +46,18 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Install AntonPOS native Android files
+        run: |
+          mkdir -p android/app/src/main/java/com/antonservice/pos
+
+          cp MainActivity.java \
+            android/app/src/main/java/com/antonservice/pos/MainActivity.java
+
+          cp BluetoothPrinterBridge.java \
+            android/app/src/main/java/com/antonservice/pos/BluetoothPrinterBridge.java
+
+          echo "Native Android files berhasil dipasang."
+
       - name: Sync Capacitor
         run: npx cap sync android
 
