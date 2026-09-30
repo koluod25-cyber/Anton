@@ -150,18 +150,32 @@ jobs:
               raise SystemExit(1)
           PY
 
-      - name: Build Android APK
+     - name: Build Android APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew --version
-          ./gradlew --stop || true
-          ./gradlew assembleDebug --no-daemon
 
-      - name: Upload AntonPOS APK
+          echo "=== Gradle version ==="
+          ./gradlew --version
+
+          echo "=== Stop Gradle daemon ==="
+          ./gradlew --stop || true
+
+          echo "=== Build Debug APK ==="
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
+          echo "=== Mencari APK hasil build ==="
+          find app/build/outputs -type f -name "*.apk" -print
+
+          echo "=== Memeriksa APK ==="
+          test -n "$(find app/build/outputs -type f -name '*.apk' -print -quit)"
+
+          echo "APK berhasil ditemukan."
+
+     - name: Upload AntonPOS APK
         uses: actions/upload-artifact@v4
         with:
           name: AntonPOS-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/**/*.apk
           if-no-files-found: error
           retention-days: 14
