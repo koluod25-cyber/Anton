@@ -969,78 +969,7 @@ productId:
     setPrinterBusy(false);
   }
 };
-      {printerBusy ? "Mencari..." : "Cari Printer USB / OTG"}
-    </Button>
 
-    {usbPrinters.length > 0 && (
-      <div className="space-y-2">
-        {usbPrinters.map((device) => {
-          const selected =
-            selectedUsbPrinter?.deviceId === device.deviceId;
-
-          return (
-            <div
-              key={`${device.deviceId}-${device.vendorId}-${device.productId}`}
-              className={`rounded-lg border p-3 ${
-                selected ? "border-primary" : ""
-              }`}
-            >
-              <div className="font-medium">
-                {device.name || "USB Printer"}
-              </div>
-
-              {device.productName && (
-                <div className="text-sm text-muted-foreground">
-                  {device.productName}
-                </div>
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                Device ID: {device.deviceId} · Vendor ID: {device.vendorId} ·
-                Product ID: {device.productId}
-              </div>
-
-              <div className="mt-2 flex gap-2">
-                <Button
-                  type="button"
-                  variant={selected ? "default" : "outline"}
-                  onClick={() =>
-                    setSelectedUsbPrinter({
-                      deviceId: device.deviceId,
-                      vendorId: device.vendorId,
-                      productId: device.productId,
-                      name: device.name,
-                    })
-                  }
-                >
-                  {selected ? "Dipilih" : "Pilih"}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => testUsbPrinter({
-                    deviceId: device.deviceId,
-                    vendorId: device.vendorId,
-                    productId: device.productId,
-                    name: device.name,
-                  })}
-                  disabled={printerBusy}
-                >
-                  Tes
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    )}
-  </div>
-)}
-    if (printer.connection === "USB" && !selectedUsbPrinter) {
-  toast.error("Cari dan pilih printer USB/OTG terlebih dahulu.");
-  return;
-    }
   const [logo, setLogo] = useState<string>(() => { const stored = readStored<string>("anton_logo_v22", MARK_URL); return stored.includes("anton-service-mark_") ? MARK_URL : stored; });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customer, setCustomer] = useState("Umum");
