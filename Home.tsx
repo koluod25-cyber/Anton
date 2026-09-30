@@ -1533,7 +1533,8 @@ productId:
     onClose={() => setReceipt(null)}
     onPrint={printReceiptNative}
         printerBusy={printerBusy}
-  )}
+      />
+    )}
 </>;
     }
 
