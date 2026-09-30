@@ -1532,9 +1532,12 @@ productId:
     logo={logo}
     onClose={() => setReceipt(null)}
     onPrint={printReceiptNative}
-    printerBusy={printerBusy}
+        printerBusy={printerBusy}
   />
 )}
+</>
+  );
+}
 
 function MetricCard({ label, value, caption, accent }: { label: string; value: string; caption: string; accent: "red" | "charcoal" | "rose" | "blue" }) { const colors = { red: "border-t-[3px] border-t-[#c7362f]", charcoal: "border-t-[3px] border-t-slate-800", rose: "border-t-[3px] border-t-[#c7362f]", blue: "border-t-[3px] border-t-blue-700" }; return <div className={cn("app-card border bg-white p-4", colors[accent])}><p className="panel-label mono">{label}</p><p className="metric-value mono mt-2 truncate">{value}</p><p className="mt-2 text-[10px] font-semibold text-slate-500">{caption}</p></div>; }
 function BalanceQuickCard({ assetTotal, liabilityTotal, equityTotal, netIncome, totalLiabilityEquity, difference }: { assetTotal: number; liabilityTotal: number; equityTotal: number; netIncome: number; totalLiabilityEquity: number; difference: number }) { return <div className="app-card p-5"><div className="flex items-start justify-between"><div><p className="panel-label">Kontrol cepat</p><h2 className="mt-1 font-extrabold">Neraca ringkas</h2></div><Scale size={18} className="text-slate-400" /></div><div className="mt-5 space-y-2.5"><Row label="Aktiva" value={formatCurrency(assetTotal)} /><Row label="Pasiva (Hutang)" value={formatCurrency(liabilityTotal)} /><Row label="Modal" value={formatCurrency(equityTotal)} /><Row label="Laba" value={formatCurrency(netIncome)} valueClass={netIncome >= 0 ? "text-emerald-600" : "text-red-600"} /><div className="border-t border-slate-200 pt-2.5"><Row label="Total Pasiva" value={formatCurrency(totalLiabilityEquity)} strong /></div></div><div className={cn("mt-4 flex items-center justify-between rounded-xl border-2 p-3", difference === 0 ? "border-emerald-400 bg-emerald-50 text-emerald-700" : "border-red-400 bg-red-50 text-red-700")}><span className="text-xs font-extrabold">SELISIH</span><span className="text-sm font-extrabold">{formatCurrency(difference)}</span></div><p className="mt-2 text-[10px] font-semibold text-slate-500">{difference === 0 ? "Balance — posisi seimbang" : "Tidak balance, cek data transaksi"}</p></div>; }
