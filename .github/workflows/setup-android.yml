@@ -1,0 +1,336 @@
+name: Build AntonPOS Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-24.04
+
+    steps:
+
+      # =========================================================
+      # 1. CHECKOUT
+      # =========================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show repository structure
+        run: |
+          echo "=== WORKSPACE ==="
+          pwd
+
+          echo "=== ROOT FILES ==="
+          ls -la
+
+          echo "=== IMPORTANT FILES ==="
+          test -f package.json
+          test -f capacitor.config.ts
+          test -f MainActivity.java
+          test -f BluetoothPrinterBridge.java
+
+          echo "Repository root OK."
+
+      # =========================================================
+      # 2. PNPM
+      # =========================================================
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+          run_install: false
+
+      # =========================================================
+      # 3. NODE
+      # =========================================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # =========================================================
+      # 4. JAVA 21
+      # =========================================================
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Verify Java
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          which java
+          which javac
+          java -version
+          javac -version
+
+      # =========================================================
+      # 5. INSTALL DEPENDENCIES
+      # =========================================================
+      - name: Install dependencies
+        run: |
+          pnpm install --no-frozen-lockfile
+
+      # =========================================================
+      # 6. BUILD WEB
+      # =========================================================
+      - name: Build web application
+        run: |
+          pnpm build
+
+          echo "=== DIST ==="
+          test -d dist
+          find dist -maxdepth 2 -type f | head -100
+
+          echo "Web build berhasil."
+
+      # =========================================================
+      # 7. CREATE ANDROID PROJECT
+      # =========================================================
+      - name: Add Android platform
+        run: |
+          npx cap add android
+
+          echo "=== ANDROID DIRECTORY ==="
+          test -d android
+          find android -maxdepth 2 -type f | head -100
+
+          echo "Android project berhasil dibuat."
+
+      # =========================================================
+      # 8. CHECK GENERATED GRADLE
+      # =========================================================
+      - name: Verify generated Android Gradle project
+        run: |
+          echo "=== CHECK ANDROID FILES ==="
+
+          test -f android/gradlew
+          test -f android/settings.gradle
+          test -f android/build.gradle
+          test -f android/app/build.gradle
+
+          echo "Semua file Gradle ditemukan."
+
+          echo "=== GRADLE FILES ==="
+          find android -maxdepth 3 \
+            \( -name "build.gradle" -o -name "settings.gradle" -o -name "gradlew" \) \
+            -print
+
+      # =========================================================
+      # 9. CONFIGURE ANDROID PERMISSIONS
+      # =========================================================
+      - name: Configure Android permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path(
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          if not manifest.exists():
+              raise SystemExit(
+                  "ERROR: AndroidManifest.xml tidak ditemukan"
+              )
+
+          text = manifest.read_text()
+
+          permissions = """
+              <uses-permission android:name="android.permission.CAMERA" />
+
+              <uses-permission
+                  android:name="android.permission.BLUETOOTH"
+                  android:maxSdkVersion="30" />
+
+              <uses-permission
+                  android:name="android.permission.BLUETOOTH_ADMIN"
+                  android:maxSdkVersion="30" />
+
+              <uses-permission
+                  android:name="android.permission.BLUETOOTH_SCAN"
+                  android:usesPermissionFlags="neverForLocation" />
+
+              <uses-permission
+                  android:name="android.permission.BLUETOOTH_CONNECT" />
+
+              <uses-permission
+                  android:name="android.permission.INTERNET" />
+          """
+
+          if "android.permission.CAMERA" not in text:
+              marker = "<application"
+
+              if marker not in text:
+                  raise SystemExit(
+                      "ERROR: tag <application> tidak ditemukan"
+                  )
+
+              text = text.replace(
+                  marker,
+                  permissions + "\n    " + marker,
+                  1
+              )
+
+          manifest.write_text(text)
+
+          print(
+              "Camera + Bluetooth + Internet permissions berhasil dikonfigurasi."
+          )
+          PY
+
+      # =========================================================
+      # 10. VALIDATE MANIFEST
+      # =========================================================
+      - name: Validate Android Manifest
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          manifest = "android/app/src/main/AndroidManifest.xml"
+
+          try:
+              ET.parse(manifest)
+              print("AndroidManifest.xml VALID.")
+          except Exception as e:
+              print("AndroidManifest.xml INVALID:")
+              print(e)
+              raise SystemExit(1)
+          PY
+
+          echo "=== PERMISSIONS ==="
+          grep -n "android.permission" \
+            android/app/src/main/AndroidManifest.xml || true
+
+      # =========================================================
+      # 11. INSTALL NATIVE JAVA FILES
+      # =========================================================
+      - name: Install AntonPOS native Android files
+        run: |
+          mkdir -p \
+            android/app/src/main/java/com/antonservice/pos
+
+          test -f MainActivity.java
+          test -f BluetoothPrinterBridge.java
+
+          cp MainActivity.java \
+            android/app/src/main/java/com/antonservice/pos/MainActivity.java
+
+          cp BluetoothPrinterBridge.java \
+            android/app/src/main/java/com/antonservice/pos/BluetoothPrinterBridge.java
+
+          echo "=== NATIVE FILES ==="
+
+          ls -l \
+            android/app/src/main/java/com/antonservice/pos/
+
+      # =========================================================
+      # 12. CAPACITOR SYNC
+      # =========================================================
+      - name: Sync Capacitor
+        run: |
+          npx cap sync android
+
+      # =========================================================
+      # 13. VERIFY AFTER SYNC
+      # =========================================================
+      - name: Verify Android project after Capacitor sync
+        run: |
+          echo "=== ANDROID PROJECT ==="
+
+          test -f android/gradlew
+          test -f android/settings.gradle
+          test -f android/build.gradle
+          test -f android/app/build.gradle
+          test -f android/app/src/main/AndroidManifest.xml
+
+          echo "=== NATIVE JAVA ==="
+
+          test -f \
+            android/app/src/main/java/com/antonservice/pos/MainActivity.java
+
+          test -f \
+            android/app/src/main/java/com/antonservice/pos/BluetoothPrinterBridge.java
+
+          echo "Android project lengkap."
+
+      # =========================================================
+      # 14. GRADLE BUILD
+      # =========================================================
+      - name: Build Android APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+
+          echo "=== GRADLE VERSION ==="
+          ./gradlew --version
+
+          echo "=== STOP GRADLE DAEMON ==="
+          ./gradlew --stop || true
+
+          echo "=== CLEAN ==="
+          ./gradlew clean --no-daemon
+
+          echo "=== ASSEMBLE DEBUG ==="
+          ./gradlew :app:assembleDebug \
+            --no-daemon \
+            --stacktrace
+
+      # =========================================================
+      # 15. FIND APK
+      # =========================================================
+      - name: Find generated APK
+        run: |
+          echo "=== SEARCH APK ==="
+
+          find android/app/build \
+            -type f \
+            -name "*.apk" \
+            -print
+
+          echo "=== VERIFY APK ==="
+
+          APK="$(find android/app/build \
+            -type f \
+            -name "*.apk" \
+            -print -quit)"
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK tidak ditemukan."
+            exit 1
+          fi
+
+          echo "APK ditemukan:"
+          echo "$APK"
+
+      # =========================================================
+      # 16. COPY APK TO SIMPLE LOCATION
+      # =========================================================
+      - name: Prepare APK artifact
+        run: |
+          mkdir -p release
+
+          APK="$(find android/app/build \
+            -type f \
+            -name "*.apk" \
+            -print -quit)"
+
+          cp "$APK" release/AntonPOS-debug.apk
+
+          echo "=== RELEASE ==="
+          ls -lh release/AntonPOS-debug.apk
+
+      # =========================================================
+      # 17. UPLOAD APK
+      # =========================================================
+      - name: Upload AntonPOS APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AntonPOS-debug-apk
+          path: release/AntonPOS-debug.apk
+          if-no-files-found: error
+          retention-days: 14
