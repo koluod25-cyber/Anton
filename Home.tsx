@@ -1177,8 +1177,336 @@ productId:
 
   const FailedScanHistory = () => <div className="enter-panel space-y-5"><SectionHeading eyebrow="Operasional kasir" title="Riwayat Scan Gagal" description="Lihat barcode atau SKU yang tidak ditemukan dan barang yang stoknya kosong. Riwayat tersimpan di perangkat ini agar tetap tersedia saat offline." action={failedScans.length ? <button onClick={() => { if (window.confirm("Hapus seluruh riwayat scan gagal?")) { setFailedScans([]); toast.success("Riwayat scan gagal dihapus."); } }} className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-extrabold text-slate-700"><Trash2 size={14} />Hapus semua</button> : undefined} /><div className="grid grid-cols-2 gap-3 sm:grid-cols-3"><MetricCard label="TOTAL KEJADIAN" value={String(failedScans.reduce((sum, item) => sum + item.count, 0))} caption="Semua percobaan gagal" accent="red" /><MetricCard label="BARCODE TIDAK DITEMUKAN" value={String(failedScans.filter(item => item.kind === "not-found").reduce((sum, item) => sum + item.count, 0))} caption="Perlu ditambahkan ke master" accent="charcoal" /><MetricCard label="STOK KOSONG" value={String(failedScans.filter(item => item.kind === "out-of-stock").reduce((sum, item) => sum + item.count, 0))} caption="Perlu restock" accent="blue" /></div><div className="app-card overflow-hidden"><div className="grid grid-cols-[minmax(0,1fr)_110px_86px_42px] gap-2 bg-slate-950 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[.1em] text-slate-300"><span>Barcode / SKU</span><span>Masalah</span><span className="text-right">Terakhir</span><span /></div>{failedScans.length ? <div>{failedScans.map(item => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_110px_86px_42px] items-center gap-2 border-b border-slate-100 px-4 py-3.5 last:border-0"><div className="min-w-0"><p className="mono truncate text-xs font-extrabold text-slate-900">{item.value}</p><p className="mt-1 truncate text-[10px] font-semibold text-slate-500">{item.productName || "Produk tidak terdaftar"} · {item.count}×</p></div><span className={cn("rounded-full px-2 py-1 text-center text-[9px] font-extrabold", item.kind === "not-found" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>{item.kind === "not-found" ? "Tidak ditemukan" : "Stok kosong"}</span><span className="text-right text-[9px] font-semibold leading-tight text-slate-500">{new Date(item.timestamp).toLocaleString("id-ID", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span><div className="flex items-center justify-end gap-1">{item.kind === "not-found" && <button onClick={() => { setProductBarcodeDraft(item.value); setProductSkuDraft(item.value); setProductSkuInput(item.value); setProductEditor("new"); navigate("produk"); toast.info(`Kode ${item.value} siap didaftarkan sebagai barang baru.`); }} aria-label={`Tambah barang ${item.value}`} className="btn-press rounded-lg bg-blue-50 px-2 py-1.5 text-[9px] font-extrabold text-blue-700 hover:bg-blue-100">Tambah Barang</button>}<button onClick={() => { setFailedScans(previous => previous.filter(entry => entry.id !== item.id)); toast.success("Riwayat scan dihapus."); }} aria-label={`Hapus riwayat ${item.value}`} className="btn-press rounded-lg bg-slate-100 p-2 text-slate-500 hover:bg-red-50 hover:text-red-700"><Trash2 size={14} /></button></div></div>)}</div> : <div className="grid min-h-56 place-items-center p-6 text-center"><div><CircleCheck className="mx-auto text-emerald-500" size={28} /><p className="mt-2 text-sm font-extrabold">Belum ada scan gagal</p><p className="mt-1 text-xs font-semibold text-slate-500">Riwayat akan muncul otomatis setelah barcode bermasalah dipindai dari Kasir POS.</p></div></div>}</div></div>;
 
-  const Setting = () => <div className="enter-panel"><SectionHeading eyebrow="Konfigurasi" title="Printer & identitas struk" description="Atur logo, ukuran media, serta teks pada struk pelanggan." /><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="space-y-5"><div className="app-card p-5"><div className="flex items-center gap-4"><div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-slate-50 p-2"><img src={logo} alt="Logo toko" className="h-full w-full object-contain" /></div><div><p className="text-sm font-extrabold">Logo toko</p><p className="mt-1 text-xs text-slate-500">JPG/PNG maksimum 1MB. Akan tampil pada struk jika diaktifkan.</p></div></div><input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={uploadLogo} /><div className="mt-4 flex gap-2"><button onClick={() => logoInput.current?.click()} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"><Upload size={14} />Input logo</button><button onClick={() => setLogo(MARK_URL)} className="btn-press rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-extrabold text-slate-700">Reset default</button></div></div><div className="app-card p-5"><p className="panel-label">Ukuran kertas</p><div className="mt-3 grid grid-cols-3 gap-2">{([{ id: "58mm", label: "58 mm", sub: "Kecil", color: "border-amber-300 bg-amber-50 text-amber-800" }, { id: "80mm", label: "80 mm", sub: "Besar", color: "border-emerald-300 bg-emerald-50 text-emerald-800" }, { id: "A4", label: "A4", sub: "HVS", color: "border-blue-300 bg-blue-50 text-blue-800" }] as const).map(size => <button onClick={() => setPrinter(previous => ({ ...previous, size: size.id }))} key={size.id} className={cn("btn-press rounded-xl border-2 p-3 text-left", printer.size === size.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : size.color)}><p className="text-xs font-extrabold">{size.label}</p><p className="mt-1 text-[10px] font-semibold opacity-70">{size.sub}</p></button>)}</div><div className="mt-5 grid gap-3 sm:grid-cols-2"><SettingsField label="Header text" value={printer.headerText} onChange={value => setPrinter(previous => ({ ...previous, headerText: value }))} /><SettingsField label="Footer text" value={printer.footerText} onChange={value => setPrinter(previous => ({ ...previous, footerText: value }))} /><SettingsField label="NIB" value={printer.nib} onChange={value => setPrinter(previous => ({ ...previous, nib: value }))} /><SettingsField label="Telepon" value={printer.phone} onChange={value => setPrinter(previous => ({ ...previous, phone: value }))} /><div className="sm:col-span-2"><SettingsField label="Alamat" value={printer.address} onChange={value => setPrinter(previous => ({ ...previous, address: value }))} /></div><div className="sm:col-span-2"><SettingsField label="Teks garansi" value={printer.warrantyText} onChange={value => setPrinter(previous => ({ ...previous, warrantyText: value }))} /></div></div><label className="mt-5 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3 text-xs font-extrabold"><input type="checkbox" checked={printer.showLogo} onChange={event => setPrinter(previous => ({ ...previous, showLogo: event.target.checked }))} className="h-4 w-4 accent-[#c7362f]" />Tampilkan logo di struk</label><div className="mt-5 flex gap-2"><button onClick={() => toast.success("Setting tersimpan di perangkat ini.")} className="btn-press rounded-xl bg-slate-900 px-4 py-3 text-xs font-extrabold text-white">Simpan setting</button><button onClick={resetAll} className="btn-press rounded-xl bg-slate-100 px-4 py-3 text-xs font-extrabold text-slate-700">Reset semua data</button></div></div></div><ReceiptPreview printer={printer} logo={logo} transaction={transactions[0]} /></div></div>;
+  const Setting = () => <div className="enter-panel"><SectionHeading eyebrow="Konfigurasi" title="Printer & identitas struk" description="Atur logo, ukuran media, serta teks pada struk pelanggan." /><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="space-y-5"><div className="app-card p-5"><div className="flex items-center gap-4"><div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-slate-50 p-2"><img src={logo} alt="Logo toko" className="h-full w-full object-contain" /></div><div><p className="text-sm font-extrabold">Logo toko</p><p className="mt-1 text-xs text-slate-500">JPG/PNG maksimum 1MB. Akan tampil pada struk jika diaktifkan.</p></div></div><input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={uploadLogo} /><div className="mt-4 flex gap-2"><button onClick={() => logoInput.current?.click()} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"><Upload size={14} />Input logo</button><button onClick={() => setLogo(MARK_URL)} className="btn-press rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-extrabold text-slate-700">Reset default</button></div></div><div <div className="app-card p-5">
+  <p className="panel-label">Koneksi Printer</p>
 
+  <h2 className="mt-1 text-sm font-extrabold">
+    Pilih metode koneksi printer
+  </h2>
+
+  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+    {(
+      [
+        "Bluetooth",
+        "WiFi",
+        "USB",
+        "System",
+      ] as PrinterSettings["connection"][]
+    ).map((connection) => (
+      <button
+        key={connection}
+        type="button"
+        onClick={() =>
+          setPrinter((previous) => ({
+            ...previous,
+            connection,
+          }))
+        }
+        className={cn(
+          "btn-press rounded-xl border-2 px-3 py-3 text-xs font-extrabold",
+          printer.connection === connection
+            ? "border-slate-900 bg-slate-900 text-white"
+            : "border-slate-200 bg-white text-slate-600"
+        )}
+      >
+        {connection === "USB"
+          ? "USB / OTG"
+          : connection === "WiFi"
+            ? "Wi-Fi"
+            : connection}
+      </button>
+    ))}
+  </div>
+
+  {printer.connection === "Bluetooth" && (
+    <div className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4">
+      <div>
+        <p className="text-xs font-extrabold">
+          Printer Bluetooth
+        </p>
+        <p className="mt-1 text-[10px] text-slate-500">
+          Printer POS-58B harus sudah dipasangkan melalui
+          pengaturan Bluetooth Android.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={searchBluetoothPrinters}
+        disabled={printerBusy}
+        className="btn-press w-full rounded-xl bg-blue-700 px-4 py-3 text-xs font-extrabold text-white"
+      >
+        {printerBusy
+          ? "Mencari printer..."
+          : "Cari Printer Bluetooth"}
+      </button>
+
+      {pairedPrinters.length > 0 && (
+        <div className="space-y-2">
+          {pairedPrinters.map((device) => {
+            const selected =
+              printer.bluetoothAddress === device.address;
+
+            return (
+              <div
+                key={device.address}
+                className={cn(
+                  "rounded-xl border p-3",
+                  selected
+                    ? "border-slate-900 bg-white"
+                    : "border-slate-200 bg-white"
+                )}
+              >
+                <p className="text-xs font-extrabold">
+                  {device.name || "Bluetooth Printer"}
+                </p>
+
+                <p className="mt-1 text-[10px] text-slate-500">
+                  {device.address}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPrinter((previous) => ({
+                      ...previous,
+                      connection: "Bluetooth",
+                      bluetoothName: device.name,
+                      bluetoothAddress: device.address,
+                    }))
+                  }
+                  className={cn(
+                    "btn-press mt-2 rounded-lg px-3 py-2 text-[10px] font-extrabold",
+                    selected
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-700"
+                  )}
+                >
+                  {selected ? "Printer Dipilih" : "Pilih Printer"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {printer.bluetoothAddress && (
+        <button
+          type="button"
+          onClick={testBluetoothPrinter}
+          disabled={printerBusy}
+          className="btn-press w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-extrabold text-slate-700"
+        >
+          Tes Cetak Bluetooth
+        </button>
+      )}
+    </div>
+  )}
+
+  {printer.connection === "WiFi" && (
+    <div className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4">
+      <p className="text-xs font-extrabold">
+        Printer Wi-Fi
+      </p>
+
+      <div className="grid grid-cols-2 gap-2">
+        <SettingsField
+          label="IP Printer"
+          value={printer.wifiHost}
+          onChange={(value) =>
+            setPrinter((previous) => ({
+              ...previous,
+              wifiHost: value,
+            }))
+          }
+        />
+
+        <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+          Port
+          <input
+            type="number"
+            value={printer.wifiPort}
+            onChange={(event) =>
+              setPrinter((previous) => ({
+                ...previous,
+                wifiPort:
+                  Number(event.target.value) || 9100,
+              }))
+            }
+            className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
+          />
+        </label>
+      </div>
+
+      <button
+        type="button"
+        onClick={testWifiPrinter}
+        disabled={printerBusy || !printer.wifiHost.trim()}
+        className="btn-press w-full rounded-xl bg-blue-700 px-4 py-3 text-xs font-extrabold text-white disabled:opacity-50"
+      >
+        Tes Cetak Wi-Fi
+      </button>
+    </div>
+  )}
+
+  {printer.connection === "USB" && (
+    <div className="mt-4 space-y-3 rounded-xl bg-slate-50 p-4">
+      <div>
+        <p className="text-xs font-extrabold">
+          Printer USB / OTG
+        </p>
+
+        <p className="mt-1 text-[10px] text-slate-500">
+          Sambungkan printer USB melalui kabel OTG ke HP Android,
+          lalu cari perangkat.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={searchUsbPrinters}
+        disabled={printerBusy}
+        className="btn-press w-full rounded-xl bg-blue-700 px-4 py-3 text-xs font-extrabold text-white"
+      >
+        {printerBusy
+          ? "Mencari..."
+          : "Cari Printer USB / OTG"}
+      </button>
+
+      {usbPrinters.length > 0 && (
+        <div className="space-y-2">
+          {usbPrinters.map((device) => {
+            const selected =
+              selectedUsbPrinter?.deviceId === device.deviceId;
+
+            return (
+              <div
+                key={`${device.deviceId}-${device.vendorId}-${device.productId}`}
+                className={cn(
+                  "rounded-xl border bg-white p-3",
+                  selected
+                    ? "border-slate-900"
+                    : "border-slate-200"
+                )}
+              >
+                <p className="text-xs font-extrabold">
+                  {device.name || "USB Printer"}
+                </p>
+
+                {device.productName && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    {device.productName}
+                  </p>
+                )}
+
+                <p className="mt-1 text-[9px] text-slate-400">
+                  Device ID: {device.deviceId} · Vendor ID:{" "}
+                  {device.vendorId} · Product ID:{" "}
+                  {device.productId}
+                </p>
+
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedUsbPrinter({
+                        deviceId: device.deviceId,
+                        vendorId: device.vendorId,
+                        productId: device.productId,
+                        name: device.name,
+                      })
+                    }
+                    className={cn(
+                      "btn-press rounded-lg px-3 py-2 text-[10px] font-extrabold",
+                      selected
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-700"
+                    )}
+                  >
+                    {selected ? "Dipilih" : "Pilih"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      testUsbPrinter({
+                        deviceId: device.deviceId,
+                        vendorId: device.vendorId,
+                        productId: device.productId,
+                        name: device.name,
+                      })
+                    }
+                    disabled={printerBusy}
+                    className="btn-press rounded-lg bg-white px-3 py-2 text-[10px] font-extrabold text-slate-700 ring-1 ring-slate-200"
+                  >
+                    Tes
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  )}
+
+  {printer.connection === "System" && (
+    <div className="mt-4 rounded-xl bg-slate-50 p-4 text-xs text-slate-600">
+      <p className="font-extrabold text-slate-900">
+        Cetak melalui sistem Android / browser
+      </p>
+      <p className="mt-1 leading-relaxed">
+        Gunakan pilihan ini jika printer dikelola melalui
+        sistem cetak perangkat.
+      </p>
+    </div>
+  )}
+
+  <div className="mt-4 grid grid-cols-2 gap-3">
+    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+      Jumlah cetak
+      <input
+        type="number"
+        min="1"
+        max="20"
+        value={printer.copies}
+        onChange={(event) =>
+          setPrinter((previous) => ({
+            ...previous,
+            copies: Math.max(
+              1,
+              Math.min(
+                20,
+                Number(event.target.value) || 1
+              )
+            ),
+          }))
+        }
+        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
+      />
+    </label>
+
+    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+      Mode cetak
+      <select
+        value={printer.colorMode}
+        onChange={(event) =>
+          setPrinter((previous) => ({
+            ...previous,
+            colorMode:
+              event.target.value as PrinterSettings["colorMode"],
+          }))
+        }
+        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
+      >
+        <option value="BW">Hitam / Putih</option>
+        <option value="Color">Warna</option>
+      </select>
+    </label>
+  </div>
+</div>
+    className="app-card p-5"><p className="panel-label">Ukuran kertas</p><div className="mt-3 grid grid-cols-3 gap-2">{([{ id: "58mm", label: "58 mm", sub: "Kecil", color: "border-amber-300 bg-amber-50 text-amber-800" }, { id: "80mm", label: "80 mm", sub: "Besar", color: "border-emerald-300 bg-emerald-50 text-emerald-800" }, { id: "A4", label: "A4", sub: "HVS", color: "border-blue-300 bg-blue-50 text-blue-800" }] as const).map(size => <button onClick={() => setPrinter(previous => ({ ...previous, size: size.id }))} key={size.id} className={cn("btn-press rounded-xl border-2 p-3 text-left", printer.size === size.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : size.color)}><p className="text-xs font-extrabold">{size.label}</p><p className="mt-1 text-[10px] font-semibold opacity-70">{size.sub}</p></button>)}</div><div className="mt-5 grid gap-3 sm:grid-cols-2"><SettingsField label="Header text" value={printer.headerText} onChange={value => setPrinter(previous => ({ ...previous, headerText: value }))} /><SettingsField label="Footer text" value={printer.footerText} onChange={value => setPrinter(previous => ({ ...previous, footerText: value }))} /><SettingsField label="NIB" value={printer.nib} onChange={value => setPrinter(previous => ({ ...previous, nib: value }))} /><SettingsField label="Telepon" value={printer.phone} onChange={value => setPrinter(previous => ({ ...previous, phone: value }))} /><div className="sm:col-span-2"><SettingsField label="Alamat" value={printer.address} onChange={value => setPrinter(previous => ({ ...previous, address: value }))} /></div><div className="sm:col-span-2"><SettingsField label="Teks garansi" value={printer.warrantyText} onChange={value => setPrinter(previous => ({ ...previous, warrantyText: value }))} /></div></div><label className="mt-5 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3 text-xs font-extrabold"><input type="checkbox" checked={printer.showLogo} onChange={event => setPrinter(previous => ({ ...previous, showLogo: event.target.checked }))} className="h-4 w-4 accent-[#c7362f]" />Tampilkan logo di struk</label><div className="mt-5 flex gap-2"><button onClick={() => toast.success("Setting tersimpan di perangkat ini.")} className="btn-press rounded-xl bg-slate-900 px-4 py-3 text-xs font-extrabold text-white">Simpan setting</button><button onClick={resetAll} className="btn-press rounded-xl bg-slate-100 px-4 py-3 text-xs font-extrabold text-slate-700">Reset semua data</button></div></div></div><ReceiptPreview printer={printer} logo={logo} transaction={transactions[0]} /></div></div>;
+  
   const productSkuNormalized = productSkuInput.trim().toLowerCase();
   const productSkuOwnerId = productEditor !== "new" && productEditor ? productEditor.id : null;
   const productSkuDuplicate = Boolean(productSkuNormalized) && products.some(entry => entry.id !== productSkuOwnerId && entry.sku.trim().toLowerCase() === productSkuNormalized);
