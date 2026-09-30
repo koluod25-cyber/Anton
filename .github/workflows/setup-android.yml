@@ -1,0 +1,44 @@
+name: Setup AntonPOS Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-android:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web application
+        run: pnpm build
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Verify Android project
+        run: |
+          echo "=== Android project ==="
+          test -f android/app/src/main/AndroidManifest.xml
+          test -f android/app/build.gradle
+          test -f android/settings.gradle
+          echo "Android project berhasil dibuat."
+          find android/app/src/main -maxdepth 3 -type f | sort | head -100
