@@ -1,0 +1,75 @@
+name: Build AntonPOS Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Verify Java
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          which java
+          which javac
+          java -version
+          javac -version
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build web application
+        run: pnpm build
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Verify Android project
+        run: |
+          echo "=== Android project ==="
+          test -f android/app/src/main/AndroidManifest.xml
+          test -f android/app/build.gradle
+          test -f android/settings.gradle
+          test -f android/gradlew
+          echo "Android project OK"
+
+      - name: Build Android APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --version
+          ./gradlew --stop || true
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload AntonPOS APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AntonPOS-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
