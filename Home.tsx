@@ -10,32 +10,105 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { toast } from "sonner";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { BluetoothPrinterBridge } from "./BluetoothPrinterBridge";
+
 type ProductType = "jasa" | "spare" | "beban";
-type PaymentMethod = "Cash" | "Transfer" | "QRIS" | "Piutang" | "Split";
-type TransactionPayments = { cash: number; transfer: number; qris: number; piutang: number };
-type TransactionSettlement = { date: string; amount: number; method: "Cash" | "Transfer" | "QRIS" };
+
+type PaymentMethod =
+  | "Cash"
+  | "Transfer"
+  | "QRIS"
+  | "Piutang"
+  | "Split";
+
+type TransactionPayments = {
+  cash: number;
+  transfer: number;
+  qris: number;
+  piutang: number;
+};
+
+type TransactionSettlement = {
+  date: string;
+  amount: number;
+  method: "Cash" | "Transfer" | "QRIS";
+};
+
+type TransactionItem = {
+  productId: string;
+  name: string;
+  qty: number;
+  price: number;
+  cost: number;
+  type: ProductType;
+};
+
 type Transaction = {
   noNota: string;
   date: string;
   customer: string;
   address: string;
   phone: string;
+
   items: TransactionItem[];
+
   subtotal: number;
   discount: number;
   tax: number;
   total: number;
+
   jasaTotal: number;
   spareTotal: number;
   hppTotal: number;
+
   paymentMethod: PaymentMethod;
+
   paid: number;
   change: number;
+
   warrantyCode: string;
+
   payments?: TransactionPayments;
+
   settlements?: TransactionSettlement[];
+
   deletedAt?: string;
 };
+
+export type CapitalSource =
+  | "Kas"
+  | "Hutang"
+  | "Bank"
+  | "QRIS"
+  | "Piutang"
+  | "Modal";
+
+type AccountType =
+  | "Aktiva"
+  | "Pasiva"
+  | "Modal"
+  | "Pendapatan"
+  | "Beban";
+
+type Product = {
+  id: string;
+  sku: string;
+  barcode: string;
+  name: string;
+  price: number;
+  cost: number;
+  stock: number;
+  type: ProductType;
+  capitalSource?: CapitalSource;
+  depreciation?: number;
+  buildingCost?: number;
+};
+
+type CartItem = {
+  productId: string;
+  qty: number;
+  price: number;
+};
+
 export type CapitalSource = "Kas" | "Hutang" | "Bank" | "QRIS" | "Piutang" | "Modal";
 type AccountType = "Aktiva" | "Pasiva" | "Modal" | "Pendapatan" | "Beban";
 type Product = { id: string; sku: string; barcode: string; name: string; price: number; cost: number; stock: number; type: ProductType; capitalSource?: CapitalSource; depreciation?: number; buildingCost?: number };
