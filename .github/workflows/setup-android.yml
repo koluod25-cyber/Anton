@@ -124,6 +124,7 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           manifest = Path(
               "android/app/src/main/AndroidManifest.xml"
@@ -131,25 +132,53 @@ jobs:
 
           text = manifest.read_text()
 
-          if "android:icon=" not in text:
+          # Ganti icon jika sudah ada
+          text = re.sub(
+              r'android:icon="[^"]*"',
+              'android:icon="@drawable/anton_service_pos"',
+              text,
+              count=1
+          )
+
+          # Ganti roundIcon jika sudah ada
+          text = re.sub(
+              r'android:roundIcon="[^"]*"',
+              'android:roundIcon="@drawable/anton_service_pos"',
+              text,
+              count=1
+          )
+
+          # Jika atribut belum ada, tambahkan ke <application>
+          if 'android:icon="@drawable/anton_service_pos"' not in text:
               text = text.replace(
                   "<application",
-                  '<application\n        
-                  android:icon="@drawable/anton_service_pos"\n        
-                  android:roundIcon="@drawable/anton_service_pos"',
+                  '<application\n'
+                  'android:icon="@drawable/anton_service_pos"',
+                  1
+              )
+
+          if 'android:roundIcon="@drawable/anton_service_pos"' not in text:
+              text = text.replace(
+                  'android:icon="@drawable/anton_service_pos"',
+                  'android:icon="@drawable/anton_service_pos"\n'
+                  'android:roundIcon="@drawable/anton_service_pos"',
                   1
               )
 
           manifest.write_text(text)
           PY
 
+          echo "=== LAUNCHER ICON ==="
           grep -n "android:icon\|android:roundIcon" \
           android/app/src/main/AndroidManifest.xml
 
-          echo "Launcher icon Anton Service POS terpasang."
+          test -f \
+          android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          echo "Launcher icon Anton Service POS siap."
 
       # =========================================================
-      # 8. CHECK GENERATED GRADLE
+      # 9. CHECK GENERATED GRADLE
       # =========================================================
       - name: Verify generated Android Gradle project
         run: |
@@ -168,7 +197,7 @@ jobs:
             -print
 
       # =========================================================
-      # 9. CONFIGURE ANDROID PERMISSIONS
+      # 10. CONFIGURE ANDROID PERMISSIONS
       # =========================================================
       - name: Configure Android permissions
         run: |
@@ -230,7 +259,7 @@ jobs:
           PY
 
       # =========================================================
-      # 10. VALIDATE MANIFEST
+      # 11. VALIDATE MANIFEST
       # =========================================================
       - name: Validate Android Manifest
         run: |
@@ -253,7 +282,7 @@ jobs:
             android/app/src/main/AndroidManifest.xml || true
 
       # =========================================================
-      # 11. INSTALL NATIVE JAVA FILES
+      # 12. INSTALL NATIVE JAVA FILES
       # =========================================================
       - name: Install AntonPOS native Android files
         run: |
@@ -275,14 +304,14 @@ jobs:
             android/app/src/main/java/com/antonservice/pos/
 
       # =========================================================
-      # 12. CAPACITOR SYNC
+      # 13. CAPACITOR SYNC
       # =========================================================
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
       # =========================================================
-      # 13. VERIFY AFTER SYNC
+      # 14. VERIFY AFTER SYNC
       # =========================================================
       - name: Verify Android project after Capacitor sync
         run: |
@@ -305,7 +334,7 @@ jobs:
           echo "Android project lengkap."
 
       # =========================================================
-      # 14. GRADLE BUILD
+      # 15. GRADLE BUILD
       # =========================================================
       - name: Build Android APK
         working-directory: android
@@ -327,7 +356,7 @@ jobs:
             --stacktrace
 
       # =========================================================
-      # 15. FIND APK
+      # 16. FIND APK
       # =========================================================
       - name: Find generated APK
         run: |
@@ -354,7 +383,7 @@ jobs:
           echo "$APK"
 
       # =========================================================
-      # 16. COPY APK TO SIMPLE LOCATION
+      # 17. COPY APK TO SIMPLE LOCATION
       # =========================================================
       - name: Prepare APK artifact
         run: |
@@ -371,7 +400,7 @@ jobs:
           ls -lh release/AntonPOS-debug.apk
 
       # =========================================================
-      # 17. UPLOAD APK
+      # 18. UPLOAD APK
       # =========================================================
       - name: Upload AntonPOS APK
         uses: actions/upload-artifact@v4
