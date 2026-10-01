@@ -109,10 +109,6 @@ type CartItem = {
   price: number;
 };
 
-export type CapitalSource = "Kas" | "Hutang" | "Bank" | "QRIS" | "Piutang" | "Modal";
-type AccountType = "Aktiva" | "Pasiva" | "Modal" | "Pendapatan" | "Beban";
-type Product = { id: string; sku: string; barcode: string; name: string; price: number; cost: number; stock: number; type: ProductType; capitalSource?: CapitalSource; depreciation?: number; buildingCost?: number };
-type CartItem = { productId: string; qty: number; price: number };
 type TransactionItem = { productId: string; name: string; qty: number; price: number; cost: number; type: ProductType };
 type FailedScanKind = "not-found" | "out-of-stock";
 export type FailedScanRecord = { id: string; value: string; kind: FailedScanKind; productName?: string; timestamp: string; count: number };
@@ -1306,7 +1302,12 @@ warrantyCode: transaction.warrantyCode,
     setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
   };
   const settleReceivable = (transaction: Transaction) => {
+  // isi proses pelunasan piutang
+};
+
   const deleteTransaction = (transaction: Transaction) => {
+  // isi proses penghapusan transaksi
+};
   const restoreStock = window.confirm(
     `Hapus transaksi ${transaction.noNota}.\n\n` +
     `KEMBALIKAN STOK BARANG?\n\n` +
