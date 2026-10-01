@@ -4,11 +4,13 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules",
-    "build",
-    "dist",
-    "**/*.test.ts",
-    "android"
+  "node_modules",
+  "build",
+  "dist",
+  "android",
+  "schema.ts",
+  "**/*.test.ts",
+  "**/*.spec.ts"
   ],
   "compilerOptions": {
   "incremental": true,
@@ -32,3 +34,4 @@
   },
   "types": ["node", "vite/client"]
   }
+}
