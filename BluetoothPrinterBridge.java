@@ -85,17 +85,32 @@ public class BluetoothPrinterBridge extends Plugin {
         String connection = call.getString("connection", "Bluetooth");
         String content = call.getString("content", "");
         String logoBase64 = call.getString("logoBase64", null);
+        String warrantyCode = call.getString("warrantyCode", "");
         int copies = Math.max(1, Math.min(20, call.getInt("copies", 1)));
         String paperWidth = call.getString("paperWidth", "58mm");
         try {
             if ("WiFi".equalsIgnoreCase(connection)) printWifi(call.getString("host"), call.getInt("port", 9100), content, copies, paperWidth, logoBase64);
             else if ("USB".equalsIgnoreCase(connection)) { call.reject("Pencetakan USB belum melalui bridge Bluetooth ini."); return; }
-            else printBluetooth(call.getString("address"), content, copies, paperWidth, logoBase64);
+            else printBluetooth(
+        call.getString("address"),
+        content,
+        copies,
+        paperWidth,
+        logoBase64,
+        warrantyCode
+);
             JSObject result = new JSObject(); result.put("success", true); call.resolve(result);
         } catch (Exception e) { call.reject("Cetak gagal: " + safeMessage(e)); }
     }
 
-    private void printBluetooth(String address, String content, int copies, String paperWidth, String logoBase64) throws Exception {
+    private void printBluetooth(
+        String address,
+        String content,
+        int copies,
+        String paperWidth,
+        String logoBase64,
+        String warrantyCode
+) throws Exception {
         if (!hasBluetoothConnectPermission()) throw new Exception("Izin BLUETOOTH_CONNECT belum diberikan.");
         if (address == null || address.trim().isEmpty()) throw new Exception("Alamat Bluetooth printer belum dipilih.");
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
@@ -107,7 +122,12 @@ public class BluetoothPrinterBridge extends Plugin {
         try {
             socket = connectBluetoothSocket(device);
             OutputStream output = socket.getOutputStream();
-            byte[] data = buildEscPos(content, paperWidth, logoBase64);
+            byte[] data = buildEscPos(
+        content,
+        paperWidth,
+        logoBase64,
+        warrantyCode
+);
             for (int i = 0; i < copies; i++) { output.write(data); output.flush(); Thread.sleep(700); }
             Thread.sleep(300);
         } finally { closeSocket(socket); }
@@ -172,7 +192,11 @@ public class BluetoothPrinterBridge extends Plugin {
         try {
             String raw = base64.trim(); int comma = raw.indexOf(','); if (comma >= 0) raw = raw.substring(comma + 1);
             byte[] bytes = Base64.decode(raw, Base64.DEFAULT); Bitmap source = BitmapFactory.decodeByteArray(bytes, 0, bytes.length); if (source == null) return new byte[0];
-            int maxWidth = "80mm".equalsIgnoreCase(paperWidth) ? 576 : "A4".equalsIgnoreCase(paperWidth) ? 720 : 384;
+            int maxWidth = "80mm".equalsIgnoreCase(paperWidth)
+        ? 220
+        : "A4".equalsIgnoreCase(paperWidth)
+            ? 300
+            : 160;
             float scale = Math.min(1f, (float) maxWidth / Math.max(1, source.getWidth()));
             int width = Math.max(1, Math.round(source.getWidth() * scale)); int height = Math.max(1, Math.round(source.getHeight() * scale));
             Bitmap scaled = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888); Canvas canvas = new Canvas(scaled); canvas.drawColor(Color.WHITE); Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG); canvas.drawBitmap(source, null, new android.graphics.Rect(0,0,width,height), paint);
