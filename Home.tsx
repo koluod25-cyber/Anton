@@ -207,12 +207,61 @@ export const buildReceiptText = (transaction: Transaction,  printer: PrinterSett
   const money = (value: number) =>
     formatCurrency(value).replace("Rp ", "Rp ");
 
-  const center = (text: string) => {
-    const value = String(text);
-    if (value.length >= width) return value.slice(0, width);
-    const left = Math.floor((width - value.length) / 2);
-    return " ".repeat(left) + value;
-  };
+  const wrapText = (text: string) => {
+  const words = String(text).split(/\s+/).filter(Boolean);
+
+  if (words.length === 0) return [""];
+
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    if (!current) {
+      if (word.length <= width) {
+        current = word;
+      } else {
+        for (let i = 0; i < word.length; i += width) {
+          lines.push(word.slice(i, i + width));
+        }
+      }
+    } else if (current.length + 1 + word.length <= width) {
+      current += " " + word;
+    } else {
+      lines.push(current);
+
+      if (word.length <= width) {
+        current = word;
+      } else {
+        current = "";
+
+        for (let i = 0; i < word.length; i += width) {
+          lines.push(word.slice(i, i + width));
+        }
+      }
+    }
+  }
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines;
+};
+
+const center = (text: string) =>
+  String(text)
+    .split(/\r?\n/)
+    .flatMap(line => wrapText(line))
+    .map(value => {
+      if (value.length >= width) {
+        return value;
+      }
+
+      const left = Math.floor((width - value.length) / 2);
+
+      return " ".repeat(left) + value;
+    })
+    .join("\n");
 
   const row = (label: string, value: string) => {
     const maxLabel = Math.max(1, width - value.length - 1);
@@ -1537,7 +1586,23 @@ warrantyCode: transaction.warrantyCode,
     </label>
   </div>
 </div>
-    <div className="app-card p-5"><p className="panel-label">Ukuran kertas</p><div className="mt-3 grid grid-cols-3 gap-2">{([{ id: "58mm", label: "58 mm", sub: "Kecil", color: "border-amber-300 bg-amber-50 text-amber-800" }, { id: "80mm", label: "80 mm", sub: "Besar", color: "border-emerald-300 bg-emerald-50 text-emerald-800" }, { id: "A4", label: "A4", sub: "HVS", color: "border-blue-300 bg-blue-50 text-blue-800" }] as const).map(size => <button onClick={() => setPrinter(previous => ({ ...previous, size: size.id }))} key={size.id} className={cn("btn-press rounded-xl border-2 p-3 text-left", printer.size === size.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : size.color)}><p className="text-xs font-extrabold">{size.label}</p><p className="mt-1 text-[10px] font-semibold opacity-70">{size.sub}</p></button>)}</div><div className="mt-5 grid gap-3 sm:grid-cols-2"><SettingsField label="Header text" value={printer.headerText} onChange={value => setPrinter(previous => ({ ...previous, headerText: value }))} /><SettingsField label="Footer text" value={printer.footerText} onChange={value => setPrinter(previous => ({ ...previous, footerText: value }))} /><SettingsField label="NIB" value={printer.nib} onChange={value => setPrinter(previous => ({ ...previous, nib: value }))} /><SettingsField label="Telepon" value={printer.phone} onChange={value => setPrinter(previous => ({ ...previous, phone: value }))} /><div className="sm:col-span-2"><SettingsField label="Alamat" value={printer.address} onChange={value => setPrinter(previous => ({ ...previous, address: value }))} /></div><div className="sm:col-span-2"><SettingsField label="Teks garansi" value={printer.warrantyText} onChange={value => setPrinter(previous => ({ ...previous, warrantyText: value }))} /></div></div><label className="mt-5 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3 text-xs font-extrabold"><input type="checkbox" checked={printer.showLogo} onChange={event => setPrinter(previous => ({ ...previous, showLogo: event.target.checked }))} className="h-4 w-4 accent-[#c7362f]" />Tampilkan logo di struk</label><div className="mt-5 flex gap-2"><button onClick={() => toast.success("Setting tersimpan di perangkat ini.")} className="btn-press rounded-xl bg-slate-900 px-4 py-3 text-xs font-extrabold text-white">Simpan setting</button><button onClick={resetAll} className="btn-press rounded-xl bg-slate-100 px-4 py-3 text-xs font-extrabold text-slate-700">Reset semua data</button></div></div></div><ReceiptPreview printer={printer} logo={logo} transaction={transactions[0]} /></div></div>;
+    <div className="app-card p-5"><p className="panel-label">Ukuran kertas</p><div className="mt-3 grid grid-cols-3 gap-2">{([{ id: "58mm", label: "58 mm", sub: "Kecil", color: "border-amber-300 bg-amber-50 text-amber-800" }, { id: "80mm", label: "80 mm", sub: "Besar", color: "border-emerald-300 bg-emerald-50 text-emerald-800" }, { id: "A4", label: "A4", sub: "HVS", color: "border-blue-300 bg-blue-50 text-blue-800" }] as const).map(size => <button onClick={() => setPrinter(previous => ({ ...previous, size: size.id }))} key={size.id} className={cn("btn-press rounded-xl border-2 p-3 text-left", printer.size === size.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : size.color)}><p className="text-xs font-extrabold">{size.label}</p><p className="mt-1 text-[10px] font-semibold opacity-70">{size.sub}</p></button>)}</div><div className="mt-5 grid gap-3 sm:grid-cols-2"><SettingsField
+  label="Header text"
+  value={printer.headerText}
+  multiline
+  onChange={value =>
+    setPrinter(previous => ({ ...previous, headerText: value }))
+  }
+/>
+
+<SettingsField
+  label="Footer text"
+  value={printer.footerText}
+  multiline
+  onChange={value =>
+    setPrinter(previous => ({ ...previous, footerText: value }))
+  }
+/>/><SettingsField label="NIB" value={printer.nib} onChange={value => setPrinter(previous => ({ ...previous, nib: value }))} /><SettingsField label="Telepon" value={printer.phone} onChange={value => setPrinter(previous => ({ ...previous, phone: value }))} /><div className="sm:col-span-2"><SettingsField label="Alamat" value={printer.address} onChange={value => setPrinter(previous => ({ ...previous, address: value }))} /></div><div className="sm:col-span-2"><SettingsField label="Teks garansi" value={printer.warrantyText} onChange={value => setPrinter(previous => ({ ...previous, warrantyText: value }))} /></div></div><label className="mt-5 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3 text-xs font-extrabold"><input type="checkbox" checked={printer.showLogo} onChange={event => setPrinter(previous => ({ ...previous, showLogo: event.target.checked }))} className="h-4 w-4 accent-[#c7362f]" />Tampilkan logo di struk</label><div className="mt-5 flex gap-2"><button onClick={() => toast.success("Setting tersimpan di perangkat ini.")} className="btn-press rounded-xl bg-slate-900 px-4 py-3 text-xs font-extrabold text-white">Simpan setting</button><button onClick={resetAll} className="btn-press rounded-xl bg-slate-100 px-4 py-3 text-xs font-extrabold text-slate-700">Reset semua data</button></div></div></div><ReceiptPreview printer={printer} logo={logo} transaction={transactions[0]} /></div></div>;
   
   const productSkuNormalized = productSkuInput.trim().toLowerCase();
   const productSkuOwnerId = productEditor !== "new" && productEditor ? productEditor.id : null;
