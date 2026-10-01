@@ -875,11 +875,44 @@ export default function Home() {
     /*
      * BUAT TEKS STRUK
      */
-    const content =
+        const content =
       buildReceiptText(
         transaction,
         printer
       );
+
+    // Logo yang sedang dipakai di preview dikirim ke native bridge.
+    // Bridge Android akan mengubahnya menjadi bitmap ESC/POS.
+    let logoBase64: string | undefined;
+
+    if (printer.showLogo && logo) {
+      try {
+        const response = await fetch(logo);
+        if (response.ok) {
+          const blob = await response.blob();
+          logoBase64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const value = String(reader.result || "");
+              if (value) {
+                resolve(value);
+              } else {
+                reject(new Error("Data logo kosong."));
+              }
+            };
+            reader.onerror = () => reject(reader.error || new Error("Logo tidak dapat dibaca."));
+            reader.readAsDataURL(blob);
+          });
+        } else {
+          console.warn("Logo tidak dapat dimuat:", response.status);
+        }
+      } catch (logoError) {
+        console.warn("LOGO PRINT ERROR:", logoError);
+      }
+    }
+
+    const result =
+      await BluetoothPrinterBridge.print({
 
     /*
      * KIRIM KE ANDROID NATIVE
