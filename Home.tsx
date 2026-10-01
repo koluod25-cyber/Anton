@@ -801,40 +801,25 @@ export default function Home() {
   const printReceiptNative = async (
   transaction: Transaction
 ) => {
-
   /*
    * MODE SYSTEM
-   *
-   * Tetap mempertahankan window.print()
-   * untuk printer/system print A4.
    */
   if (printer.connection === "System") {
-
     window.print();
-
     return;
   }
 
   try {
-
     setPrinterBusy(true);
 
     /*
      * BLUETOOTH
      */
-    if (
-      printer.connection ===
-      "Bluetooth"
-    ) {
-
-      if (
-        !printer.bluetoothAddress
-      ) {
-
+    if (printer.connection === "Bluetooth") {
+      if (!printer.bluetoothAddress) {
         toast.error(
           "Pilih printer Bluetooth terlebih dahulu."
         );
-
         return;
       }
     }
@@ -842,144 +827,176 @@ export default function Home() {
     /*
      * WI-FI
      */
-    if (
-      printer.connection ===
-      "WiFi"
-    ) {
-
-      if (
-        !printer.wifiHost.trim()
-      ) {
-
+    if (printer.connection === "WiFi") {
+      if (!printer.wifiHost.trim()) {
         toast.error(
           "Masukkan IP printer Wi-Fi terlebih dahulu."
         );
-
         return;
       }
     }
-    
+
     /*
-    * USB / OTG
-    */
-     if (printer.connection === "USB") {
-     if (!selectedUsbPrinter) {
-    toast.error(
-      "Cari dan pilih printer USB/OTG terlebih dahulu."
+     * USB / OTG
+     */
+    if (printer.connection === "USB") {
+      if (!selectedUsbPrinter) {
+        toast.error(
+          "Cari dan pilih printer USB/OTG terlebih dahulu."
+        );
+        return;
+      }
+    }
+
+    /*
+     * BUAT TEKS STRUK
+     */
+    const content =
+      buildReceiptText(
+        transaction,
+        printer
+      );
+
+    /*
+     * SIAPKAN LOGO
+     */
+    let logoBase64: string | undefined;
+
+    if (printer.showLogo && logo) {
+      try {
+        const response = await fetch(logo);
+
+        if (response.ok) {
+          const blob = await response.blob();
+
+          logoBase64 =
+            await new Promise<string>(
+              (resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onloadend = () => {
+                  const value =
+                    String(
+                      reader.result || ""
+                    );
+
+                  if (value) {
+                    resolve(value);
+                  } else {
+                    reject(
+                      new Error(
+                        "Data logo kosong."
+                      )
+                    );
+                  }
+                };
+
+                reader.onerror = () =>
+                  reject(
+                    reader.error ||
+                    new Error(
+                      "Logo tidak dapat dibaca."
+                    )
+                  );
+
+                reader.readAsDataURL(blob);
+              }
+            );
+        }
+      } catch (logoError) {
+        console.warn(
+          "LOGO PRINT ERROR:",
+          logoError
+        );
+      }
+    }
+
+    /*
+     * KIRIM KE ANDROID NATIVE
+     */
+    const result =
+      await BluetoothPrinterBridge.print({
+        connection:
+          printer.connection === "WiFi"
+            ? "WiFi"
+            : printer.connection === "USB"
+              ? "USB"
+              : "Bluetooth",
+
+        address:
+          printer.connection === "Bluetooth"
+            ? printer.bluetoothAddress
+            : undefined,
+
+        host:
+          printer.connection === "WiFi"
+            ? printer.wifiHost.trim()
+            : undefined,
+
+        port:
+          printer.connection === "WiFi"
+            ? printer.wifiPort || 9100
+            : undefined,
+
+        deviceId:
+          printer.connection === "USB"
+            ? selectedUsbPrinter?.deviceId
+            : undefined,
+
+        vendorId:
+          printer.connection === "USB"
+            ? selectedUsbPrinter?.vendorId
+            : undefined,
+
+        productId:
+          printer.connection === "USB"
+            ? selectedUsbPrinter?.productId
+            : undefined,
+
+        copies: Math.max(
+          1,
+          Math.min(
+            20,
+            printer.copies || 1
+          )
+        ),
+
+        paperWidth:
+          printer.size,
+
+        content,
+        logoBase64,
+      });
+
+    /*
+     * HASIL CETAK
+     */
+    if (result.success) {
+      toast.success(
+        "Struk berhasil dikirim ke printer."
+      );
+    } else {
+      toast.error(
+        "Printer tidak mengonfirmasi pencetakan."
+      );
+    }
+
+  } catch (error) {
+    console.error(
+      "PRINT RECEIPT ERROR:",
+      error
     );
 
-    return;
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Cetak struk gagal."
+    );
+
+  } finally {
+    setPrinterBusy(false);
   }
-    }
-
-    /*
- * BUAT TEKS STRUK
- */
-const content =
-  buildReceiptText(
-    transaction,
-    printer
-  );
-
-// Jika menggunakan logo, siapkan logoBase64 di sini
-let logoBase64: string | undefined;
-
-if (printer.showLogo && logo) {
-  try {
-    const response = await fetch(logo);
-    if (response.ok) {
-      const blob = await response.blob();
-
-      logoBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onloadend = () => {
-          const value = String(reader.result || "");
-          if (value) {
-            resolve(value);
-          } else {
-            reject(new Error("Data logo kosong."));
-          }
-        };
-
-        reader.onerror = () =>
-          reject(
-            reader.error ||
-            new Error("Logo tidak dapat dibaca.")
-          );
-
-        reader.readAsDataURL(blob);
-      });
-    }
-  } catch (logoError) {
-    console.warn("LOGO PRINT ERROR:", logoError);
-  }
-}
-
-
-/*
- * KIRIM KE ANDROID NATIVE
- */
-const result =
-  await BluetoothPrinterBridge.print({
-    connection:
-      printer.connection === "WiFi"
-        ? "WiFi"
-        : printer.connection === "USB"
-          ? "USB"
-          : "Bluetooth",
-
-    address:
-      printer.connection === "Bluetooth"
-        ? printer.bluetoothAddress
-        : undefined,
-
-    host:
-      printer.connection === "WiFi"
-        ? printer.wifiHost.trim()
-        : undefined,
-
-    port:
-      printer.connection === "WiFi"
-        ? printer.wifiPort || 9100
-        : undefined,
-
-    deviceId:
-      printer.connection === "USB"
-        ? selectedUsbPrinter?.deviceId
-        : undefined,
-
-    vendorId:
-      printer.connection === "USB"
-        ? selectedUsbPrinter?.vendorId
-        : undefined,
-
-    productId:
-      printer.connection === "USB"
-        ? selectedUsbPrinter?.productId
-        : undefined,
-
-    copies: Math.max(
-      1,
-      Math.min(
-        20,
-        printer.copies || 1
-      )
-    ),
-
-    paperWidth:
-      printer.size,
-
-    content,
-    logoBase64,
-  });
-
-/*
- * PERIKSA HASIL CETAK
- */
-if (result.success) {
-  // ...
-        }
+};
 
   const [logo, setLogo] = useState<string>(() => { const stored = readStored<string>("anton_logo_v22", MARK_URL); return stored.includes("anton-service-mark_") ? MARK_URL : stored; });
   const [cart, setCart] = useState<CartItem[]>([]);
