@@ -109,7 +109,6 @@ type CartItem = {
   price: number;
 };
 
-type TransactionItem = { productId: string; name: string; qty: number; price: number; cost: number; type: ProductType };
 type FailedScanKind = "not-found" | "out-of-stock";
 export type FailedScanRecord = { id: string; value: string; kind: FailedScanKind; productName?: string; timestamp: string; count: number };
 export const upsertFailedScanRecord = (previous: FailedScanRecord[], entry: Omit<FailedScanRecord, "id" | "timestamp" | "count">, now = new Date()) => { const existing = previous.find(item => item.value === entry.value && item.kind === entry.kind); const next = existing ? previous.map(item => item === existing ? { ...item, productName: entry.productName || item.productName, timestamp: now.toISOString(), count: item.count + 1 } : item) : [{ ...entry, id: `${entry.kind}-${entry.value}-${now.getTime()}`, timestamp: now.toISOString(), count: 1 }, ...previous]; return next.slice(0, 100); };
@@ -1302,12 +1301,12 @@ warrantyCode: transaction.warrantyCode,
     setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
   };
   const settleReceivable = (transaction: Transaction) => {
-  // isi proses pelunasan piutang
+  // SELURUH kode pelunasan piutang
 };
-
   const deleteTransaction = (transaction: Transaction) => {
-  // isi proses penghapusan transaksi
+  // SELURUH kode penghapusan transaksi
 };
+  const saveProduct = ...
   const restoreStock = window.confirm(
     `Hapus transaksi ${transaction.noNota}.\n\n` +
     `KEMBALIKAN STOK BARANG?\n\n` +
