@@ -1,0 +1,585 @@
+name: Build Anton Service POS Android
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+
+    runs-on: ubuntu-24.04
+
+    steps:
+
+      # =========================================================
+      # 1. CHECKOUT
+      # =========================================================
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify repository
+        run: |
+          echo "=========================================="
+          echo "VERIFY REPOSITORY"
+          echo "=========================================="
+
+          pwd
+          ls -la
+
+          test -f package.json
+          test -f capacitor.config.ts
+          test -f "icon Anton Service Pos.png"
+          test -f MainActivity.java
+          test -f BluetoothPrinterBridge.java
+
+          echo "Repository OK."
+
+      # =========================================================
+      # 2. PNPM
+      # =========================================================
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+          run_install: false
+
+      # =========================================================
+      # 3. NODE.JS
+      # =========================================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # =========================================================
+      # 4. JAVA
+      # =========================================================
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Verify Java
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+
+          java -version
+          javac -version
+
+      # =========================================================
+      # 5. INSTALL DEPENDENCIES
+      # =========================================================
+      - name: Install dependencies
+        run: |
+          pnpm install --no-frozen-lockfile
+
+      # =========================================================
+      # 6. PREPARE WEB ICON
+      # =========================================================
+      - name: Prepare Anton Service POS web icon
+        run: |
+          echo "=========================================="
+          echo "PREPARE WEB ICON"
+          echo "=========================================="
+
+          mkdir -p public/icons
+
+          cp \
+            "icon Anton Service Pos.png" \
+            public/icons/anton-service-pos.png
+
+          test -f \
+            public/icons/anton-service-pos.png
+
+          echo "Web icon:"
+          ls -lh public/icons/anton-service-pos.png
+
+      # =========================================================
+      # 7. TYPESCRIPT CHECK
+      # =========================================================
+      - name: TypeScript check
+        run: |
+          echo "=========================================="
+          echo "TYPESCRIPT CHECK"
+          echo "=========================================="
+
+          pnpm check
+
+      # =========================================================
+      # 8. BUILD WEB
+      # =========================================================
+      - name: Build web application
+        run: |
+          echo "=========================================="
+          echo "BUILD WEB"
+          echo "=========================================="
+
+          pnpm build
+
+          test -d dist
+
+          echo "=== DIST FILES ==="
+          find dist -maxdepth 2 -type f | head -100
+
+          echo "Web build berhasil."
+
+      # =========================================================
+      # 9. CREATE ANDROID PROJECT
+      # =========================================================
+      - name: Add Android platform
+        run: |
+          echo "=========================================="
+          echo "CREATE ANDROID PROJECT"
+          echo "=========================================="
+
+          npx cap add android
+
+          test -d android
+          test -f android/gradlew
+          test -f android/settings.gradle
+          test -f android/app/build.gradle
+
+          echo "Android project berhasil dibuat."
+
+      # =========================================================
+      # 10. CONFIGURE ANDROID PERMISSIONS
+      # =========================================================
+      - name: Configure Android permissions
+        run: |
+          echo "=========================================="
+          echo "CONFIGURE ANDROID PERMISSIONS"
+          echo "=========================================="
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path(
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          if not manifest.exists():
+              raise SystemExit(
+                  "ERROR: AndroidManifest.xml tidak ditemukan."
+              )
+
+          text = manifest.read_text()
+
+          permissions = [
+              '<uses-permission android:name="android.permission.CAMERA" />',
+
+              '<uses-permission '
+              'android:name="android.permission.BLUETOOTH" '
+              'android:maxSdkVersion="30" />',
+
+              '<uses-permission '
+              'android:name="android.permission.BLUETOOTH_ADMIN" '
+              'android:maxSdkVersion="30" />',
+
+              '<uses-permission '
+              'android:name="android.permission.BLUETOOTH_SCAN" '
+              'android:usesPermissionFlags="neverForLocation" />',
+
+              '<uses-permission '
+              'android:name="android.permission.BLUETOOTH_CONNECT" />',
+
+              '<uses-permission '
+              'android:name="android.permission.INTERNET" />'
+          ]
+
+          marker = "<application"
+
+          if marker not in text:
+              raise SystemExit(
+                  "ERROR: tag <application> tidak ditemukan."
+              )
+
+          for permission in permissions:
+              permission_name = permission.split(
+                  'android:name="'
+              )[1].split('"')[0]
+
+              if permission_name not in text:
+                  text = text.replace(
+                      marker,
+                      f"    {permission}\n\n    {marker}",
+                      1
+                  )
+
+          manifest.write_text(text)
+
+          print(
+              "Permissions Android berhasil dikonfigurasi."
+          )
+          PY
+
+      # =========================================================
+      # 11. CAPACITOR SYNC
+      # =========================================================
+      - name: Sync Capacitor
+        run: |
+          echo "=========================================="
+          echo "CAPACITOR SYNC"
+          echo "=========================================="
+
+          npx cap sync android
+
+          test -d android
+          test -f android/app/src/main/AndroidManifest.xml
+
+          echo "Capacitor sync berhasil."
+
+      # =========================================================
+      # 12. INSTALL NATIVE JAVA FILES
+      #
+      # PENTING:
+      # Dilakukan SETELAH cap sync supaya file bridge
+      # yang sudah terbukti bekerja menjadi file final.
+      # =========================================================
+      - name: Install AntonPOS native Android files
+        run: |
+          echo "=========================================="
+          echo "INSTALL NATIVE JAVA FILES"
+          echo "=========================================="
+
+          mkdir -p \
+            android/app/src/main/java/com/antonservice/pos
+
+          test -f MainActivity.java
+          test -f BluetoothPrinterBridge.java
+
+          cp \
+            MainActivity.java \
+            android/app/src/main/java/com/antonservice/pos/MainActivity.java
+
+          cp \
+            BluetoothPrinterBridge.java \
+            android/app/src/main/java/com/antonservice/pos/BluetoothPrinterBridge.java
+
+          test -f \
+            android/app/src/main/java/com/antonservice/pos/MainActivity.java
+
+          test -f \
+            android/app/src/main/java/com/antonservice/pos/BluetoothPrinterBridge.java
+
+          echo "Native files berhasil dipasang."
+
+      # =========================================================
+      # 13. INSTALL LAUNCHER ICON
+      #
+      # PENTING:
+      # Icon dipasang SETELAH cap sync.
+      # =========================================================
+      - name: Install Anton Service POS launcher icon
+        run: |
+          echo "=========================================="
+          echo "INSTALL LAUNCHER ICON"
+          echo "=========================================="
+
+          mkdir -p \
+            android/app/src/main/res/drawable-nodpi
+
+          cp \
+            "icon Anton Service Pos.png" \
+            android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          test -f \
+            android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          manifest = Path(
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          text = manifest.read_text()
+
+          # -----------------------------------------------------
+          # Ganti android:icon lama
+          # -----------------------------------------------------
+          text = re.sub(
+              r'android:icon="[^"]*"',
+              'android:icon="@drawable/anton_service_pos"',
+              text,
+              count=1
+          )
+
+          # -----------------------------------------------------
+          # Ganti android:roundIcon lama
+          # -----------------------------------------------------
+          text = re.sub(
+              r'android:roundIcon="[^"]*"',
+              'android:roundIcon="@drawable/anton_service_pos"',
+              text,
+              count=1
+          )
+
+          # -----------------------------------------------------
+          # Jika android:icon belum ada
+          # -----------------------------------------------------
+          if (
+              'android:icon="@drawable/anton_service_pos"'
+              not in text
+          ):
+              text = text.replace(
+                  "<application",
+                  '<application\n'
+                  '        android:icon="@drawable/anton_service_pos"',
+                  1
+              )
+
+          # -----------------------------------------------------
+          # Jika android:roundIcon belum ada
+          # -----------------------------------------------------
+          if (
+              'android:roundIcon="@drawable/anton_service_pos"'
+              not in text
+          ):
+              text = text.replace(
+                  'android:icon="@drawable/anton_service_pos"',
+                  'android:icon="@drawable/anton_service_pos"\n'
+                  '        android:roundIcon="@drawable/anton_service_pos"',
+                  1
+              )
+
+          manifest.write_text(text)
+          PY
+
+          echo "=== LAUNCHER ICON MANIFEST ==="
+
+          grep -n \
+            "android:icon\|android:roundIcon" \
+            android/app/src/main/AndroidManifest.xml
+
+          echo "=== ICON FILE ==="
+
+          ls -lh \
+            android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          test -f \
+            android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          echo "Launcher icon siap."
+
+      # =========================================================
+      # 14. VERIFY MANIFEST
+      # =========================================================
+      - name: Validate Android Manifest
+        run: |
+          echo "=========================================="
+          echo "VALIDATE ANDROID MANIFEST"
+          echo "=========================================="
+
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          manifest = (
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          try:
+              ET.parse(manifest)
+              print("AndroidManifest.xml VALID.")
+          except Exception as e:
+              print("AndroidManifest.xml INVALID:")
+              print(e)
+              raise SystemExit(1)
+          PY
+
+          echo "=== ICON ==="
+
+          grep -n \
+            "android:icon\|android:roundIcon" \
+            android/app/src/main/AndroidManifest.xml
+
+          echo "=== PERMISSIONS ==="
+
+          grep -n \
+            "android.permission" \
+            android/app/src/main/AndroidManifest.xml || true
+
+      # =========================================================
+      # 15. VERIFY NATIVE BRIDGE
+      # =========================================================
+      - name: Verify native printer bridge
+        run: |
+          echo "=========================================="
+          echo "VERIFY PRINTER BRIDGE"
+          echo "=========================================="
+
+          BRIDGE="android/app/src/main/java/com/antonservice/pos/BluetoothPrinterBridge.java"
+
+          test -f "$BRIDGE"
+
+          grep -q \
+            "import com.getcapacitor.PluginMethod;" \
+            "$BRIDGE"
+
+          grep -q \
+            "BluetoothPrinterBridge" \
+            "$BRIDGE"
+
+          grep -q \
+            "buildWarrantyBarcode" \
+            "$BRIDGE"
+
+          grep -q \
+            "buildLogoRaster" \
+            "$BRIDGE"
+
+          grep -q \
+            "printBluetooth" \
+            "$BRIDGE"
+
+          grep -q \
+            "printWifi" \
+            "$BRIDGE"
+
+          echo "Printer bridge OK."
+
+      # =========================================================
+      # 16. VERIFY MAIN ACTIVITY
+      # =========================================================
+      - name: Verify MainActivity
+        run: |
+          echo "=========================================="
+          echo "VERIFY MAIN ACTIVITY"
+          echo "=========================================="
+
+          MAIN="android/app/src/main/java/com/antonservice/pos/MainActivity.java"
+
+          test -f "$MAIN"
+
+          grep -q \
+            "MainActivity" \
+            "$MAIN"
+
+          echo "MainActivity OK."
+
+      # =========================================================
+      # 17. VERIFY GRADLE PROJECT
+      # =========================================================
+      - name: Verify Android Gradle project
+        run: |
+          echo "=========================================="
+          echo "VERIFY GRADLE PROJECT"
+          echo "=========================================="
+
+          test -f android/gradlew
+          test -f android/settings.gradle
+          test -f android/build.gradle
+          test -f android/app/build.gradle
+
+          chmod +x android/gradlew
+
+          echo "Android Gradle project OK."
+
+      # =========================================================
+      # 18. GRADLE BUILD
+      # =========================================================
+      - name: Build Android APK
+        working-directory: android
+        run: |
+          echo "=========================================="
+          echo "ANDROID BUILD"
+          echo "=========================================="
+
+          chmod +x gradlew
+
+          echo "=== GRADLE VERSION ==="
+          ./gradlew --version
+
+          echo "=== STOP GRADLE ==="
+          ./gradlew --stop || true
+
+          echo "=== CLEAN ==="
+          ./gradlew clean --no-daemon
+
+          echo "=== ASSEMBLE DEBUG APK ==="
+
+          ./gradlew \
+            :app:assembleDebug \
+            --no-daemon \
+            --stacktrace
+
+          echo "Android APK build selesai."
+
+      # =========================================================
+      # 19. FIND APK
+      # =========================================================
+      - name: Find generated APK
+        run: |
+          echo "=========================================="
+          echo "SEARCH APK"
+          echo "=========================================="
+
+          find \
+            android/app/build \
+            -type f \
+            -name "*.apk" \
+            -print
+
+          APK="$(
+            find android/app/build \
+              -type f \
+              -name "*.apk" \
+              -print \
+              -quit
+          )"
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK tidak ditemukan."
+            exit 1
+          fi
+
+          echo "APK ditemukan:"
+          echo "$APK"
+
+      # =========================================================
+      # 20. PREPARE RELEASE APK
+      # =========================================================
+      - name: Prepare APK artifact
+        run: |
+          echo "=========================================="
+          echo "PREPARE APK"
+          echo "=========================================="
+
+          mkdir -p release
+
+          APK="$(
+            find android/app/build \
+              -type f \
+              -name "*.apk" \
+              -print \
+              -quit
+          )"
+
+          test -n "$APK"
+
+          cp \
+            "$APK" \
+            release/AntonPOS-debug.apk
+
+          test -f \
+            release/AntonPOS-debug.apk
+
+          echo "=== FINAL APK ==="
+
+          ls -lh \
+            release/AntonPOS-debug.apk
+
+      # =========================================================
+      # 21. UPLOAD APK
+      # =========================================================
+      - name: Upload Anton Service POS APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AntonPOS-debug-apk
+          path: release/AntonPOS-debug.apk
+          if-no-files-found: error
+          retention-days: 14
