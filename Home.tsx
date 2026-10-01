@@ -1301,12 +1301,89 @@ warrantyCode: transaction.warrantyCode,
     setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
   };
   const settleReceivable = (transaction: Transaction) => {
-  // SELURUH kode pelunasan piutang
+  const outstanding = transactionReceivableOutstanding(transaction);
+
+  if (outstanding <= 0) {
+    toast.info(`Piutang ${transaction.noNota} sudah lunas.`);
+    return;
+  }
+
+  const amountText = window.prompt(
+    `Pembayaran piutang ${transaction.noNota}\n` +
+      `Sisa yang harus dibayar: ${formatCurrency(outstanding)}\n\n` +
+      `Masukkan jumlah pembayaran:`,
+    String(outstanding)
+  );
+
+  if (amountText === null) return;
+
+  const amount = Number(
+    amountText.replace(/[^\d]/g, "")
+  );
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    toast.error("Jumlah pembayaran tidak valid.");
+    return;
+  }
+
+  const settlementAmount = Math.min(amount, outstanding);
+
+  const methodInput = window.prompt(
+    "Metode pembayaran:\n" +
+      "1 = Cash\n" +
+      "2 = Transfer\n" +
+      "3 = QRIS",
+    "1"
+  );
+
+  if (methodInput === null) return;
+
+  const method =
+    methodInput === "2"
+      ? "Transfer"
+      : methodInput === "3"
+        ? "QRIS"
+        : "Cash";
+
+  const settlement: TransactionSettlement = {
+    date: new Date().toISOString(),
+    amount: settlementAmount,
+    method,
+  };
+
+  setTransactions((previous) =>
+    previous.map((item) => {
+      if (item.noNota !== transaction.noNota) {
+        return item;
+      }
+
+      const settlements = [
+        ...(item.settlements ?? []),
+        settlement,
+      ];
+
+      return {
+        ...item,
+        settlements,
+      };
+    })
+  );
+
+  const remaining = Math.max(
+    0,
+    outstanding - settlementAmount
+  );
+
+  if (remaining === 0) {
+    toast.success(
+      `Piutang ${transaction.noNota} sudah LUNAS.`
+    );
+  } else {
+    toast.success(
+      `Pembayaran dicatat. Sisa piutang: ${formatCurrency(remaining)}`
+    );
+  }
 };
-  const deleteTransaction = (transaction: Transaction) => {
-  // SELURUH kode penghapusan transaksi
-};
-  const saveProduct = ...
   const restoreStock = window.confirm(
     `Hapus transaksi ${transaction.noNota}.\n\n` +
     `KEMBALIKAN STOK BARANG?\n\n` +
