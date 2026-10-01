@@ -14,6 +14,28 @@ type ProductType = "jasa" | "spare" | "beban";
 type PaymentMethod = "Cash" | "Transfer" | "QRIS" | "Piutang" | "Split";
 type TransactionPayments = { cash: number; transfer: number; qris: number; piutang: number };
 type TransactionSettlement = { date: string; amount: number; method: "Cash" | "Transfer" | "QRIS" };
+type Transaction = {
+  noNota: string;
+  date: string;
+  customer: string;
+  address: string;
+  phone: string;
+  items: TransactionItem[];
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
+  jasaTotal: number;
+  spareTotal: number;
+  hppTotal: number;
+  paymentMethod: PaymentMethod;
+  paid: number;
+  change: number;
+  warrantyCode: string;
+  payments?: TransactionPayments;
+  settlements?: TransactionSettlement[];
+  deletedAt?: string;
+};
 export type CapitalSource = "Kas" | "Hutang" | "Bank" | "QRIS" | "Piutang" | "Modal";
 type AccountType = "Aktiva" | "Pasiva" | "Modal" | "Pendapatan" | "Beban";
 
@@ -1169,7 +1191,13 @@ warrantyCode: transaction.warrantyCode,
   const hasPaymentShortfall = allocatedPaymentTotal < total;
   const paymentBreakdown: TransactionPayments = { ...paymentAmounts, piutang: effectiveReceivable };
   const filteredProducts = products.filter(item => [item.name, item.sku, item.barcode].some(value => value.toLowerCase().includes(query.toLowerCase())));
-  const filteredTransactions = transactions.filter(item => [item.noNota, item.customer].some(value => value.toLowerCase().includes(transactionQuery.toLowerCase())));
+  const filteredTransactions = transactions.filter(
+  item =>
+    !item.deletedAt &&
+    [item.noNota, item.customer].some(value =>
+      value.toLowerCase().includes(transactionQuery.toLowerCase())
+    )
+);
   const chartData = useMemo(() => Array.from({ length: 7 }, (_, index) => { const date = new Date(); date.setDate(date.getDate() - (6 - index)); return { label: date.toLocaleDateString("id-ID", { weekday: "short" }), total: transactions.filter(transaction => dayKey(new Date(transaction.date)) === dayKey(date)).reduce((sum, transaction) => sum + transactionRevenueNet(transaction), 0) }; }), [transactions]);
   const todayTransactions = transactions.filter(transaction => dayKey(new Date(transaction.date)) === dayKey(new Date()));
   const dashboardRevenue = netRevenueTotal;
@@ -1200,13 +1228,93 @@ warrantyCode: transaction.warrantyCode,
   const completeTransaction = (openReceipt: boolean) => {
     if (!cart.length) { toast.error("Keranjang masih kosong."); return; }
     if (hasPaymentShortfall) { toast.error(`Pembayaran belum mencukupi. Kekurangan ${formatCurrency(total - allocatedPaymentTotal)}.`); return; }
-    const now = new Date(); const active = [paymentBreakdown.cash, paymentBreakdown.transfer, paymentBreakdown.qris, paymentBreakdown.piutang].filter(v => v > 0).length;
-    const method: PaymentMethod = active > 1 ? "Split" : paymentBreakdown.piutang > 0 ? "Piutang" : paymentBreakdown.cash > 0 ? "Cash" : paymentBreakdown.transfer > 0 ? "Transfer" : "QRIS";
-    const transaction: Transaction = { noNota: `AS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${String(transactions.length+1).padStart(3,"0")}`, date: transactionDateToIso(transactionDate, now), customer: customer.trim() || "Umum", address, phone, items: cart.map(item => { const product=products.find(entry=>entry.id===item.productId)!; return {productId:product.id,name:product.name,qty:item.qty,price:product.price,cost:product.type==="jasa"?0:product.cost,type:product.type}; }), subtotal, discount: discountAmount, tax, total, jasaTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="jasa"?p.price*item.qty:0)},0), spareTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="spare"?p.price*item.qty:0)},0), hppTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="spare"?p.cost*item.qty:0)},0), paymentMethod:method, paid:nonReceivablePaid, change, payments:paymentBreakdown, settlements:[], warrantyCode:`WR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*90+10)}` };
+  const now = new Date(); const active = [paymentBreakdown.cash, paymentBreakdown.transfer, paymentBreakdown.qris, paymentBreakdown.piutang].filter(v => v > 0).length;
+  const method: PaymentMethod = active > 1 ? "Split" : paymentBreakdown.piutang > 0 ? "Piutang" : paymentBreakdown.cash > 0 ? "Cash" : paymentBreakdown.transfer > 0 ? "Transfer" : "QRIS";
+  const transaction: Transaction = { noNota: `AS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${String(transactions.length+1).padStart(3,"0")}`, date: transactionDateToIso(transactionDate, now), customer: customer.trim() || "Umum", address, phone, items: cart.map(item => { const product=products.find(entry=>entry.id===item.productId)!; return {productId:product.id,name:product.name,qty:item.qty,price:product.price,cost:product.type==="jasa"?0:product.cost,type:product.type}; }), subtotal, discount: discountAmount, tax, total, jasaTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="jasa"?p.price*item.qty:0)},0), spareTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="spare"?p.price*item.qty:0)},0), hppTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="spare"?p.cost*item.qty:0)},0), paymentMethod:method, paid:nonReceivablePaid, change, payments:paymentBreakdown, settlements:[], warrantyCode:`WR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*90+10)}` };
     setProducts(previous => previous.map(product => { const item=cart.find(entry=>entry.productId===product.id); return item&&product.type==="spare"?{...product,stock:Math.max(0,product.stock-item.qty)}:product; }));
     setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
   };
   const settleReceivable = (transaction: Transaction) => {
+  const deleteTransaction = (transaction: Transaction) => {
+  const restoreStock = window.confirm(
+    `Hapus transaksi ${transaction.noNota}.\n\n` +
+    `KEMBALIKAN STOK BARANG?\n\n` +
+    `OK = Kembalikan stok\n` +
+    `Batal = Jangan kembalikan stok`
+  );
+
+  const adjustFinance = window.confirm(
+    `SESUAIKAN KEUANGAN?\n\n` +
+    `OK = Hapus pengaruh keuangan transaksi ini\n` +
+    `Batal = Pertahankan pengaruh keuangan di neraca/laporan`
+  );
+
+  const confirmed = window.confirm(
+    `Konfirmasi penghapusan ${transaction.noNota}.\n\n` +
+    `Stok: ${restoreStock ? "DIKEMBALIKAN" : "TIDAK diubah"}\n` +
+    `Keuangan: ${
+      adjustFinance ? "DISESUAIKAN" : "DIPERTAHANKAN"
+    }\n\n` +
+    `Lanjutkan hapus transaksi?`
+  );
+
+  if (!confirmed) {
+    toast.info("Penghapusan transaksi dibatalkan.");
+    return;
+  }
+
+  if (restoreStock) {
+    setProducts(previous =>
+      previous.map(product => {
+        const item = transaction.items.find(
+          entry => entry.productId === product.id
+        );
+
+        return item && product.type === "spare"
+          ? {
+              ...product,
+              stock: Math.max(0, product.stock + item.qty),
+            }
+          : product;
+      })
+    );
+  }
+
+  if (adjustFinance) {
+    setTransactions(previous =>
+      previous.filter(item => item.noNota !== transaction.noNota)
+    );
+  } else {
+    setTransactions(previous =>
+      previous.map(item =>
+        item.noNota === transaction.noNota
+          ? {
+              ...item,
+              deletedAt: new Date().toISOString(),
+            }
+          : item
+      )
+    );
+  }
+
+  setReceipt(previous =>
+    previous?.noNota === transaction.noNota ? null : previous
+  );
+
+  toast.success(
+    `Transaksi ${transaction.noNota} dihapus dari daftar. ` +
+      `${
+        restoreStock
+          ? "Stok dikembalikan."
+          : "Stok tidak diubah."
+      } ` +
+      `${
+        adjustFinance
+          ? "Keuangan disesuaikan."
+          : "Pengaruh keuangan tetap dipertahankan."
+      }`
+  );
+};
     const outstanding=transactionReceivableOutstanding(transaction); if(outstanding<=0){toast.info("Piutang sudah LUNAS.");return;}
     const raw=window.prompt(`SISA YANG HARUS DIBAYAR ${formatCurrency(outstanding)}`,String(outstanding)); if(raw===null)return; const amount=Math.min(outstanding,Math.max(0,Number(raw)||0)); if(!amount){toast.error("Jumlah pembayaran tidak valid.");return;}
     const method=(window.prompt("Metode pelunasan: Cash / Transfer / QRIS","Cash")||"") as TransactionSettlement["method"]; if(!["Cash","Transfer","QRIS"].includes(method)){toast.error("Metode tidak valid.");return;}
