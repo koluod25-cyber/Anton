@@ -110,6 +110,45 @@ jobs:
           echo "Android project berhasil dibuat."
 
       # =========================================================
+      # 8. PASANG LAUNCHER ICON ANTON SERVICE POS
+      # =========================================================
+      - name: Install Anton Service POS launcher icon
+        run: |
+          mkdir -p android/app/src/main/res/drawable-nodpi
+
+          cp "icon Anton Service Pos.png" \
+            android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          test -f \
+            android/app/src/main/res/drawable-nodpi/anton_service_pos.png
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          manifest = Path(
+              "android/app/src/main/AndroidManifest.xml"
+          )
+
+          text = manifest.read_text()
+
+          if "android:icon=" not in text:
+              text = text.replace(
+                  "<application",
+                  '<application\n        
+                  android:icon="@drawable/anton_service_pos"\n        
+                  android:roundIcon="@drawable/anton_service_pos"',
+                  1
+              )
+
+          manifest.write_text(text)
+          PY
+
+          grep -n "android:icon\|android:roundIcon" \
+          android/app/src/main/AndroidManifest.xml
+
+          echo "Launcher icon Anton Service POS terpasang."
+
+      # =========================================================
       # 8. CHECK GENERATED GRADLE
       # =========================================================
       - name: Verify generated Android Gradle project
