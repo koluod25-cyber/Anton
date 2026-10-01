@@ -89,7 +89,17 @@ public class BluetoothPrinterBridge extends Plugin {
         int copies = Math.max(1, Math.min(20, call.getInt("copies", 1)));
         String paperWidth = call.getString("paperWidth", "58mm");
         try {
-            if ("WiFi".equalsIgnoreCase(connection)) printWifi(call.getString("host"), call.getInt("port", 9100), content, copies, paperWidth, logoBase64);
+            if ("WiFi".equalsIgnoreCase(connection)) {
+    printWifi(
+            call.getString("host"),
+            call.getInt("port", 9100),
+            content,
+            copies,
+            paperWidth,
+            logoBase64,
+            warrantyCode
+    );
+            }
             else if ("USB".equalsIgnoreCase(connection)) { call.reject("Pencetakan USB belum melalui bridge Bluetooth ini."); return; }
             else printBluetooth(
         call.getString("address"),
@@ -148,11 +158,24 @@ public class BluetoothPrinterBridge extends Plugin {
         }
     }
 
-    private void printWifi(String host, int port, String content, int copies, String paperWidth, String logoBase64) throws Exception {
+    private void printWifi(
+        String host,
+        int port,
+        String content,
+        int copies,
+        String paperWidth,
+        String logoBase64,
+        String warrantyCode
+) throws Exception {
         if (host == null || host.trim().isEmpty()) throw new Exception("IP printer Wi-Fi belum diisi.");
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host.trim(), port), 5000);
-            OutputStream output = socket.getOutputStream(); byte[] data = buildEscPos(content, paperWidth, logoBase64);
+            OutputStream output = socket.getOutputStream(); byte[] data = buildEscPos(
+        content,
+        paperWidth,
+        logoBase64,
+        warrantyCode
+);
             for (int i = 0; i < copies; i++) { output.write(data); output.flush(); Thread.sleep(300); }
         }
     }
@@ -165,7 +188,12 @@ public class BluetoothPrinterBridge extends Plugin {
         catch (Exception e) { call.reject("Wi-Fi printer tidak dapat terhubung: " + safeMessage(e)); }
     }
 
-    private byte[] buildEscPos(String content, String paperWidth, String logoBase64) {
+    private byte[] buildEscPos(
+        String content,
+        String paperWidth,
+        String logoBase64,
+        String warrantyCode
+) {
         int maxChars = "80mm".equalsIgnoreCase(paperWidth) ? 48 : "A4".equalsIgnoreCase(paperWidth) ? 80 : 32;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
@@ -183,7 +211,20 @@ public class BluetoothPrinterBridge extends Plugin {
                 normalized.append('\n');
             }
             byte[] body; try { body = normalized.toString().getBytes(Charset.forName("GBK")); } catch (Exception ignored) { body = normalized.toString().getBytes(StandardCharsets.UTF_8); }
-            out.write(body); out.write(new byte[]{0x1B, 0x64, 0x03}); out.write(new byte[]{0x1D, 0x56, 0x00});
+            out.write(body);
+
+byte[] barcode = buildWarrantyBarcode(
+        warrantyCode,
+        paperWidth
+);
+
+if (barcode.length > 0) {
+    out.write(new byte[]{0x1B, 0x61, 0x01});
+    out.write(barcode);
+    out.write('\n');
+}
+
+out.write(new byte[]{0x1B, 0x64, 0x03});
             return out.toByteArray();
         } catch (Exception e) { return new byte[0]; }
     }
@@ -207,7 +248,60 @@ public class BluetoothPrinterBridge extends Plugin {
             scaled.recycle(); return out.toByteArray();
         } catch (Exception e) { return new byte[0]; }
     }
+    
+    private byte[] buildWarrantyBarcode(String code, String paperWidth) {
+    if (code == null || code.trim().isEmpty()) {
+        return new byte[0];
+    }
 
+    try {
+        byte[] value =
+                code.trim().getBytes(StandardCharsets.US_ASCII);
+
+        ByteArrayOutputStream out =
+                new ByteArrayOutputStream();
+
+        // Tampilkan teks nomor garansi
+        // di bawah barcode
+        out.write(new byte[]{
+                0x1D, 0x48, 0x02
+        });
+
+        // Tinggi barcode
+        int height =
+                "A4".equalsIgnoreCase(paperWidth)
+                        ? 70
+                        : 45;
+
+        out.write(new byte[]{
+                0x1D, 0x68, (byte) height
+        });
+
+        // Lebar batang barcode
+        out.write(new byte[]{
+                0x1D, 0x77, 0x02
+        });
+
+        // CODE128
+        out.write(0x1D);
+        out.write(0x6B);
+        out.write(0x49);
+
+        // Panjang data + Code Set B
+        out.write((byte) (value.length + 2));
+
+        // Code Set B
+        out.write(0x7B);
+        out.write(0x42);
+
+        out.write(value);
+
+        return out.toByteArray();
+
+    } catch (Exception e) {
+        return new byte[0];
+    }   
+    }
     private void closeSocket(BluetoothSocket socket) { if (socket != null) { try { socket.close(); } catch (Exception ignored) {} } }
     private String safeMessage(Exception e) { if (e == null) return "unknown error"; String message=e.getMessage(); return message==null || message.trim().isEmpty()?e.getClass().getSimpleName():message; }
 }
