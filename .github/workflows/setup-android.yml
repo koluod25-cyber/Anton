@@ -75,6 +75,13 @@ jobs:
       - name: Install dependencies
         run: |
           pnpm install --no-frozen-lockfile
+     
+      - name: Siapkan icon Anton Service POS
+        run: |
+          mkdir -p public/icons
+          cp "icon Anton Service Pos.png" public/icons/anton-service-pos.png
+          test -f public/icons/anton-service-pos.png
+          echo "Icon Anton Service POS siap."
 
       # =========================================================
       # 6. BUILD WEB
