@@ -1579,7 +1579,38 @@ function EmptyState({ label }: { label: string }) { return <div className="col-s
 function AccountColumn({ title, dot, accounts, total, totalLabel }: { title: string; dot: string; accounts: Account[]; total: number; totalLabel: string }) { return <div className="app-card overflow-hidden"><div className="flex items-center gap-2 border-b border-slate-100 px-5 py-4"><span className={cn("h-2 w-2 rounded-full", dot)} /><p className="text-xs font-extrabold">{title}</p></div><div className="min-h-[320px] p-5">{accounts.map(account => <div className="flex justify-between gap-4 border-b border-slate-100 py-3" key={`${account.code}-${account.name}`}><div><p className="text-xs font-extrabold">{account.code} <span className="font-bold text-slate-500">{account.name}</span></p></div><p className="text-right text-xs font-extrabold">{formatCurrency(account.balance)}</p></div>)}<div className="mt-4 flex justify-between rounded-xl bg-slate-950 px-3.5 py-3 text-xs font-extrabold text-white"><span>{totalLabel}</span><span>{formatCurrency(total)}</span></div></div></div>; }
 function StatementGroup({ label, accounts, total, positive = false }: { label: string; accounts: Account[]; total: number; positive?: boolean }) { return <div className="mt-1"><p className={cn("text-[11px] font-extrabold uppercase tracking-[.14em]", positive ? "text-emerald-600" : "text-red-600")}>{label}</p><div className="mt-3">{accounts.map(account => <div key={account.code} className="flex justify-between border-b border-slate-100 py-3 text-xs font-semibold"><span>{account.code} <span className="text-slate-500">{account.name}</span></span><span className="font-extrabold">{formatCurrency(account.balance)}</span></div>)}</div><div className="mt-3 flex justify-between text-sm font-extrabold"><span>Total {label}</span><span className={positive ? "text-emerald-600" : "text-red-600"}>{formatCurrency(total)}</span></div></div>; }
 function FormInput({ label, name, type = "text", defaultValue, value, onChange, required = false }: { label: string; name: string; type?: string; defaultValue?: string | number; value?: string | number; onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void; required?: boolean }) { return <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">{label}<input name={name} type={type} required={required} defaultValue={value === undefined ? defaultValue : undefined} value={value} onChange={onChange} className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-900 outline-none focus:border-[#c7362f] focus:bg-white" /></label>; }
-function SettingsField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">{label}<input value={value} onChange={event => onChange(event.target.value)} className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-900 outline-none focus:border-[#c7362f] focus:bg-white" /></label>; }
+function SettingsField({
+  label,
+  value,
+  onChange,
+  multiline = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+}) {
+  return (
+    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+      {label}
+      {multiline ? (
+        <textarea
+          value={value}
+          onChange={event => onChange(event.target.value)}
+          rows={3}
+          className="min-h-[76px] resize-y rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-[#c7362f] focus:bg-white"
+          placeholder={`Tulis ${label.toLowerCase()}...\nGunakan Enter untuk baris baru`}
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={event => onChange(event.target.value)}
+          className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-900 outline-none focus:border-[#c7362f] focus:bg-white"
+        />
+      )}
+    </label>
+  );
+      }
 function ReceiptPreview({ printer, logo, transaction }: { printer: PrinterSettings; logo: string; transaction?: Transaction }) { const sample = transaction || { noNota: "AS-TEST001", customer: "Umum", total: 250000, items: [{ name: "Service AC", qty: 1, price: 250000 }], warrantyCode: "WR-TEST001" } as Partial<Transaction>; const appearance = printer.size === "58mm" ? { width: "220px", bg: "bg-amber-100", border: "border-amber-400", text: "58 mm · Kecil" } : printer.size === "80mm" ? { width: "300px", bg: "bg-emerald-100", border: "border-emerald-400", text: "80 mm · Besar" } : { width: "100%", bg: "bg-blue-100", border: "border-blue-400", text: "A4 · HVS" }; return <div className="app-card overflow-hidden"><div className="relative h-28 overflow-hidden"><img src={RECEIPT_IMAGE} alt="Kertas dan printer struk" className="h-full w-full object-cover" /><div className="absolute inset-0 bg-slate-950/55" /><div className="absolute bottom-4 left-5"><p className="panel-label !text-slate-300">Output pelanggan</p><h2 className="mt-1 text-sm font-extrabold text-white">Preview struk</h2></div></div><div className="bg-slate-50 p-5"><div style={{ width: appearance.width }} className={cn("mx-auto max-w-full rounded-xl border-2 p-3 shadow-sm", appearance.bg, appearance.border)}><p className="rounded-full bg-slate-950 px-2 py-1 text-center text-[8px] font-extrabold tracking-[.1em] text-white">PREVIEW · {appearance.text}</p>{printer.showLogo && <img src={logo} alt="Logo" className="mx-auto mt-3 h-12 w-12 rounded-full object-contain" />}<p className="mt-2 text-center text-sm font-extrabold">ANTON SERVICE</p><p className="text-center text-[8px] font-extrabold tracking-[.1em] text-[#c7362f]">ELECTRICAL ENGINEERING</p><p className="mt-2 text-center text-[8px] leading-tight">{printer.nib}<br />{printer.address}<br />{printer.phone}</p><p className="mt-3 text-center text-[9px] font-semibold">{printer.headerText}</p><hr className="my-3 border-dashed border-slate-500" /><p className="text-[9px]">No: {sample.noNota}<br />Pel: {sample.customer}</p><hr className="my-3 border-dashed border-slate-500" />{sample.items?.map((item, index) => <div key={index} className="mb-2 text-[9px]"><b>{item.name}</b><div className="flex justify-between"><span>{item.qty} × {Number(item.price).toLocaleString("id-ID")}</span><span>{(item.qty * item.price).toLocaleString("id-ID")}</span></div></div>)}<hr className="my-3 border-dashed border-slate-500" /><div className="flex justify-between text-[10px] font-extrabold"><span>TOTAL</span><span>{formatCurrency(Number(sample.total || 0))}</span></div><p className="mt-3 text-center text-[8px] leading-tight">{printer.footerText}<br />{printer.warrantyText}</p><div className="mt-3 rounded-lg bg-white p-2"><img src={barcodeSvg(sample.warrantyCode || "WR-TEST001", 170, 30)} alt="Barcode garansi" className="mx-auto h-[48px] w-[170px]" /></div></div></div></div>; }
 function ReceiptOverlay({
   transaction,
