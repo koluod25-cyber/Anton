@@ -911,9 +911,6 @@ export default function Home() {
       }
     }
 
-    const result =
-      await BluetoothPrinterBridge.print({
-
     /*
      * KIRIM KE ANDROID NATIVE
      */
