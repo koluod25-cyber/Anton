@@ -90,7 +90,7 @@ public class BluetoothPrinterBridge extends Plugin {
         String paperWidth = call.getString("paperWidth", "58mm");
         try {
             if ("WiFi".equalsIgnoreCase(connection)) {
-    printWifi(
+            printWifi(
             call.getString("host"),
             call.getInt("port", 9100),
             content,
@@ -102,25 +102,25 @@ public class BluetoothPrinterBridge extends Plugin {
             }
             else if ("USB".equalsIgnoreCase(connection)) { call.reject("Pencetakan USB belum melalui bridge Bluetooth ini."); return; }
             else printBluetooth(
-        call.getString("address"),
-        content,
-        copies,
-        paperWidth,
-        logoBase64,
-        warrantyCode
+            call.getString("address"),
+            content,
+            copies,
+            paperWidth,
+            logoBase64,
+            warrantyCode
 );
-            JSObject result = new JSObject(); result.put("success", true); call.resolve(result);
+          JSObject result = new JSObject(); result.put("success", true); call.resolve(result);
         } catch (Exception e) { call.reject("Cetak gagal: " + safeMessage(e)); }
     }
 
-    private void printBluetooth(
+        private void printBluetooth(
         String address,
         String content,
         int copies,
         String paperWidth,
         String logoBase64,
         String warrantyCode
-) throws Exception {
+      ) throws Exception {
         if (!hasBluetoothConnectPermission()) throw new Exception("Izin BLUETOOTH_CONNECT belum diberikan.");
         if (address == null || address.trim().isEmpty()) throw new Exception("Alamat Bluetooth printer belum dipilih.");
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
@@ -133,17 +133,17 @@ public class BluetoothPrinterBridge extends Plugin {
             socket = connectBluetoothSocket(device);
             OutputStream output = socket.getOutputStream();
             byte[] data = buildEscPos(
-        content,
-        paperWidth,
-        logoBase64,
-        warrantyCode
+            content,
+            paperWidth,
+            logoBase64,
+            warrantyCode
 );
             for (int i = 0; i < copies; i++) { output.write(data); output.flush(); Thread.sleep(700); }
             Thread.sleep(300);
-        } finally { closeSocket(socket); }
+          } finally { closeSocket(socket); }
     }
 
-    private BluetoothSocket connectBluetoothSocket(BluetoothDevice device) throws Exception {
+        private BluetoothSocket connectBluetoothSocket(BluetoothDevice device) throws Exception {
         BluetoothSocket socket = null; Exception secureError = null;
         try { socket = device.createRfcommSocketToServiceRecord(SPP_UUID); socket.connect(); return socket; }
         catch (Exception e) { secureError = e; closeSocket(socket); }
@@ -152,13 +152,13 @@ public class BluetoothPrinterBridge extends Plugin {
         try {
             java.lang.reflect.Method method = device.getClass().getMethod("createRfcommSocket", int.class);
             socket = (BluetoothSocket) method.invoke(device, 1); socket.connect(); return socket;
-        } catch (Exception channelError) {
+          } catch (Exception channelError) {
             closeSocket(socket);
             throw new Exception("Bluetooth SPP gagal. Secure: " + safeMessage(secureError) + " | Insecure: " + safeMessage(channelError));
         }
     }
 
-    private void printWifi(
+        private void printWifi(
         String host,
         int port,
         String content,
@@ -166,29 +166,29 @@ public class BluetoothPrinterBridge extends Plugin {
         String paperWidth,
         String logoBase64,
         String warrantyCode
-) throws Exception {
+      ) throws Exception {
         if (host == null || host.trim().isEmpty()) throw new Exception("IP printer Wi-Fi belum diisi.");
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host.trim(), port), 5000);
             OutputStream output = socket.getOutputStream(); byte[] data = buildEscPos(
-        content,
-        paperWidth,
-        logoBase64,
-        warrantyCode
+            content,
+            paperWidth,
+            logoBase64,
+            warrantyCode
 );
             for (int i = 0; i < copies; i++) { output.write(data); output.flush(); Thread.sleep(300); }
         }
     }
 
-    @PluginMethod
-    public void testWifi(PluginCall call) {
+       @PluginMethod
+        public void testWifi(PluginCall call) {
         String host = call.getString("host"); int port = call.getInt("port", 9100);
         if (host == null || host.trim().isEmpty()) { call.reject("IP printer Wi-Fi belum diisi."); return; }
         try (Socket socket = new Socket()) { socket.connect(new InetSocketAddress(host.trim(), port), 5000); JSObject result = new JSObject(); result.put("success", true); call.resolve(result); }
         catch (Exception e) { call.reject("Wi-Fi printer tidak dapat terhubung: " + safeMessage(e)); }
     }
 
-    private byte[] buildEscPos(
+        private byte[] buildEscPos(
         String content,
         String paperWidth,
         String logoBase64,
@@ -213,29 +213,28 @@ public class BluetoothPrinterBridge extends Plugin {
             byte[] body; try { body = normalized.toString().getBytes(Charset.forName("GBK")); } catch (Exception ignored) { body = normalized.toString().getBytes(StandardCharsets.UTF_8); }
             out.write(body);
 
-byte[] barcode = buildWarrantyBarcode(
-        warrantyCode,
-        paperWidth
+            byte[] barcode = buildWarrantyBarcode(
+            warrantyCode, paperWidth
 );
 
-if (barcode.length > 0) {
-    out.write(new byte[]{0x1B, 0x61, 0x01});
-    out.write(barcode);
-    out.write('\n');
+          if (barcode.length > 0) {
+          out.write(new byte[]{0x1B, 0x61, 0x01});
+          out.write(barcode);
+          out.write('\n');
 }
 
-out.write(new byte[]{0x1B, 0x64, 0x03});
-            return out.toByteArray();
+          out.write(new byte[]{0x1B, 0x64, 0x03});
+          return out.toByteArray();
         } catch (Exception e) { return new byte[0]; }
     }
 
-    private byte[] buildLogoRaster(String base64, String paperWidth) {
-        try {
+            private byte[] buildLogoRaster(String base64, String paperWidth) {
+            try {
             String raw = base64.trim(); int comma = raw.indexOf(','); if (comma >= 0) raw = raw.substring(comma + 1);
             byte[] bytes = Base64.decode(raw, Base64.DEFAULT); Bitmap source = BitmapFactory.decodeByteArray(bytes, 0, bytes.length); if (source == null) return new byte[0];
             int maxWidth = "80mm".equalsIgnoreCase(paperWidth)
-        ? 220
-        : "A4".equalsIgnoreCase(paperWidth)
+            ? 220
+            : "A4".equalsIgnoreCase(paperWidth)
             ? 300
             : 160;
             float scale = Math.min(1f, (float) maxWidth / Math.max(1, source.getWidth()));
@@ -246,12 +245,12 @@ out.write(new byte[]{0x1B, 0x64, 0x03});
             out.write(0x1D); out.write(0x76); out.write(0x30); out.write(0x00); out.write(bytesPerRow & 0xFF); out.write((bytesPerRow >> 8) & 0xFF); out.write(height & 0xFF); out.write((height >> 8) & 0xFF);
             for (int y=0; y<height; y++) for (int bx=0; bx<bytesPerRow; bx++) { int value=0; for(int bit=0; bit<8; bit++){ int x=bx*8+bit; if(x<width){ int p=scaled.getPixel(x,y); int gray=(Color.red(p)*299+Color.green(p)*587+Color.blue(p)*114)/1000; if(gray<180) value |= (1<<(7-bit)); }} out.write(value); }
             scaled.recycle(); return out.toByteArray();
-        } catch (Exception e) { return new byte[0]; }
+          } catch (Exception e) { return new byte[0]; }
     }
     
-    private byte[] buildWarrantyBarcode(String code, String paperWidth) {
-    if (code == null || code.trim().isEmpty()) {
-        return new byte[0];
+            private byte[] buildWarrantyBarcode(String code, String paperWidth) {
+            if (code == null || code.trim().isEmpty()) {
+            return new byte[0];
     }
 
     try {
