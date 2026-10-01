@@ -1962,13 +1962,13 @@ function ReceiptOverlay({
           </div>
 
           {/* FOOTER */}
-          <hr className="my-3 border-dashed border-slate-500" />
+<hr className="my-3 border-dashed border-slate-500" />
 
-          <p className="text-center">
-            {printer.footerText}
-            <br />
-            {printer.warrantyText}
-          </p>
+<p className="whitespace-pre-line break-words text-center">
+  {printer.footerText}
+  {"\n"}
+  {printer.warrantyText}
+</p>
 
           {/* BARCODE */}
           <div className="mt-4 rounded-lg bg-white p-2">
