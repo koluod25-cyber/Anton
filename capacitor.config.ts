@@ -4,8 +4,7 @@ const config: CapacitorConfig = {
   appId: "com.antonservice.pos",
   appName: "Anton Service POS",
   webDir: "dist",
-  bundledWebRuntime: false,
-
+  
   android: {
     allowMixedContent: true
   },
