@@ -38,11 +38,9 @@ type Transaction = {
 };
 export type CapitalSource = "Kas" | "Hutang" | "Bank" | "QRIS" | "Piutang" | "Modal";
 type AccountType = "Aktiva" | "Pasiva" | "Modal" | "Pendapatan" | "Beban";
-
 type Product = { id: string; sku: string; barcode: string; name: string; price: number; cost: number; stock: number; type: ProductType; capitalSource?: CapitalSource; depreciation?: number; buildingCost?: number };
 type CartItem = { productId: string; qty: number; price: number };
 type TransactionItem = { productId: string; name: string; qty: number; price: number; cost: number; type: ProductType };
-type Transaction = { noNota: string; date: string; customer: string; address: string; phone: string; items: TransactionItem[]; subtotal: number; discount: number; tax: number; total: number; jasaTotal: number; spareTotal: number; hppTotal: number; paymentMethod: PaymentMethod; paid: number; change: number; warrantyCode: string; payments?: TransactionPayments; settlements?: TransactionSettlement[] };
 type FailedScanKind = "not-found" | "out-of-stock";
 export type FailedScanRecord = { id: string; value: string; kind: FailedScanKind; productName?: string; timestamp: string; count: number };
 export const upsertFailedScanRecord = (previous: FailedScanRecord[], entry: Omit<FailedScanRecord, "id" | "timestamp" | "count">, now = new Date()) => { const existing = previous.find(item => item.value === entry.value && item.kind === entry.kind); const next = existing ? previous.map(item => item === existing ? { ...item, productName: entry.productName || item.productName, timestamp: now.toISOString(), count: item.count + 1 } : item) : [{ ...entry, id: `${entry.kind}-${entry.value}-${now.getTime()}`, timestamp: now.toISOString(), count: 1 }, ...previous]; return next.slice(0, 100); };
