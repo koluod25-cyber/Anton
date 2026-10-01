@@ -103,12 +103,6 @@ jobs:
         run: |
           npx cap add android
 
-          echo "=== ANDROID DIRECTORY ==="
-          test -d android
-          find android -maxdepth 2 -type f | head -100
-
-          echo "Android project berhasil dibuat."
-
       # =========================================================
       # 8. PASANG LAUNCHER ICON ANTON SERVICE POS
       # =========================================================
