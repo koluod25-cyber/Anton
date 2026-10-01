@@ -962,11 +962,12 @@ export default function Home() {
         ),
 
         paperWidth:
-          printer.size,
+  printer.size,
 
-        content,
-        logoBase64,
-      });
+content,
+logoBase64,
+warrantyCode: transaction.warrantyCode,
+});
 
     /*
      * HASIL CETAK
