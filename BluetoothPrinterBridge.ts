@@ -28,6 +28,7 @@ export type BluetoothPrinterBridgePlugin = {
     paperWidth?: "58mm" | "80mm" | "A4";
     content: string;
     logoBase64?: string;
+warrantyCode?: string;
   }): Promise<{ success: boolean }>;
 };
 
