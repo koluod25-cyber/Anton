@@ -1476,10 +1476,7 @@ warrantyCode: transaction.warrantyCode,
           : "Pengaruh keuangan tetap dipertahankan."
       }`
   );
-};
-
     const saveProduct = (event: React.FormEvent<HTMLFormElement>) => {
-    const raw=window.prompt(`SISA YANG HARUS DIBAYAR ${formatCurrency(outstanding)}`,String(outstanding)); if(raw===null)return; const amount=Math.min(outstanding,Math.max(0,Number(raw)||0)); if(!amount){toast.error("Jumlah pembayaran tidak valid.");return;}
     const method=(window.prompt("Metode pelunasan: Cash / Transfer / QRIS","Cash")||"") as TransactionSettlement["method"]; if(!["Cash","Transfer","QRIS"].includes(method)){toast.error("Metode tidak valid.");return;}
     const settlement={date:new Date().toISOString(),amount,method}; setTransactions(previous=>previous.map(item=>item.noNota===transaction.noNota?{...item,settlements:[...(item.settlements||[]),settlement]}:item)); setReceipt(previous=>previous?.noNota===transaction.noNota?{...previous,settlements:[...(previous.settlements||[]),settlement]}:previous); toast.success(amount>=outstanding?"Piutang lunas. STATUS LUNAS.":`Sisa piutang ${formatCurrency(outstanding-amount)}.`);
   };
