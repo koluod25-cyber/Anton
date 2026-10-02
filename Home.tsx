@@ -1435,66 +1435,7 @@ warrantyCode: transaction.warrantyCode,
     toast.error("Jumlah pembayaran tidak valid.");
     return;
   }
-
-  const settlementAmount = Math.min(amount, outstanding);
-
-  const methodInput = window.prompt(
-    "Metode pembayaran:\n" +
-      "1 = Cash\n" +
-      "2 = Transfer\n" +
-      "3 = QRIS",
-    "1"
-  );
-
-  if (methodInput === null) return;
-
-  const method =
-    methodInput === "2"
-      ? "Transfer"
-      : methodInput === "3"
-        ? "QRIS"
-        : "Cash";
-
-  const settlement: TransactionSettlement = {
-    date: new Date().toISOString(),
-    amount: settlementAmount,
-    method,
-  };
-
-  setTransactions((previous) =>
-    previous.map((item) => {
-      if (item.noNota !== transaction.noNota) {
-        return item;
-      }
-
-      const settlements = [
-        ...(item.settlements ?? []),
-        settlement,
-      ];
-
-      return {
-        ...item,
-        settlements,
-      };
-    })
-  );
-
-  const remaining = Math.max(
-    0,
-    outstanding - settlementAmount
-  );
-
-  if (remaining === 0) {
-    toast.success(
-      `Piutang ${transaction.noNota} sudah LUNAS.`
-    );
-  } else {
-    toast.success(
-      `Pembayaran dicatat. Sisa piutang: ${formatCurrency(remaining)}`
-    );
-  }
-};
-    const deleteTransaction = (transaction: Transaction) => {
+  const deleteTransaction = (transaction: Transaction) => {
   const restoreStock = window.confirm(
     `Hapus transaksi ${transaction.noNota}.\n\n` +
       `KEMBALIKAN STOK BARANG?\n\n` +
