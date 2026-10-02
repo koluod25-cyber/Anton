@@ -1300,13 +1300,6 @@ warrantyCode: transaction.warrantyCode,
     setProducts(previous => previous.map(product => { const item=cart.find(entry=>entry.productId===product.id); return item&&product.type==="spare"?{...product,stock:Math.max(0,product.stock-item.qty)}:product; }));
     setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
   };
-  
-  const outstanding = transactionReceivableOutstanding(transaction);
-
-  if (outstanding <= 0) {
-    toast.info(`Piutang ${transaction.noNota} sudah lunas.`);
-    return;
-  }
   const settleReceivable = (transaction: Transaction) => {
   const outstanding = transactionReceivableOutstanding(transaction);
 
