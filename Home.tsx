@@ -1477,12 +1477,6 @@ warrantyCode: transaction.warrantyCode,
       }`
   );
 };
-  const restoreStock = window.confirm(
-    `Hapus transaksi ${transaction.noNota}.\n\n` +
-    `KEMBALIKAN STOK BARANG?\n\n` +
-    `OK = Kembalikan stok\n` +
-    `Batal = Jangan kembalikan stok`
-  );
 
   const adjustFinance = window.confirm(
     `SESUAIKAN KEUANGAN?\n\n` +
