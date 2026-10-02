@@ -1418,23 +1418,6 @@ warrantyCode: transaction.warrantyCode,
     );
   }
 };
-  const amountText = window.prompt(
-    `Pembayaran piutang ${transaction.noNota}\n` +
-      `Sisa yang harus dibayar: ${formatCurrency(outstanding)}\n\n` +
-      `Masukkan jumlah pembayaran:`,
-    String(outstanding)
-  );
-
-  if (amountText === null) return;
-
-  const amount = Number(
-    amountText.replace(/[^\d]/g, "")
-  );
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    toast.error("Jumlah pembayaran tidak valid.");
-    return;
-  }
   const deleteTransaction = (transaction: Transaction) => {
   const restoreStock = window.confirm(
     `Hapus transaksi ${transaction.noNota}.\n\n` +
