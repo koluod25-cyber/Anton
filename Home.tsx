@@ -1300,6 +1300,13 @@ warrantyCode: transaction.warrantyCode,
     setProducts(previous => previous.map(product => { const item=cart.find(entry=>entry.productId===product.id); return item&&product.type==="spare"?{...product,stock:Math.max(0,product.stock-item.qty)}:product; }));
     setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
   };
+  
+  const outstanding = transactionReceivableOutstanding(transaction);
+
+  if (outstanding <= 0) {
+    toast.info(`Piutang ${transaction.noNota} sudah lunas.`);
+    return;
+  }
   const settleReceivable = (transaction: Transaction) => {
   const outstanding = transactionReceivableOutstanding(transaction);
 
@@ -1308,6 +1315,109 @@ warrantyCode: transaction.warrantyCode,
     return;
   }
 
+  const amountText = window.prompt(
+    `Pembayaran piutang ${transaction.noNota}\n` +
+      `Sisa yang harus dibayar: ${formatCurrency(outstanding)}\n\n` +
+      `Masukkan jumlah pembayaran:`,
+    String(outstanding)
+  );
+
+  if (amountText === null) {
+    return;
+  }
+
+  const amount = Number(
+    amountText.replace(/[^\d]/g, "")
+  );
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    toast.error("Jumlah pembayaran tidak valid.");
+    return;
+  }
+
+  const settlementAmount = Math.min(
+    amount,
+    outstanding
+  );
+
+  const methodInput = window.prompt(
+    "Metode pembayaran:\n" +
+      "1 = Cash\n" +
+      "2 = Transfer\n" +
+      "3 = QRIS",
+    "1"
+  );
+
+  if (methodInput === null) {
+    return;
+  }
+
+  const method: TransactionSettlement["method"] =
+    methodInput === "2"
+      ? "Transfer"
+      : methodInput === "3"
+        ? "QRIS"
+        : "Cash";
+
+  const settlement: TransactionSettlement = {
+    date: new Date().toISOString(),
+    amount: settlementAmount,
+    method,
+  };
+
+  const updatedTransaction: Transaction = {
+    ...transaction,
+    settlements: [
+      ...(transaction.settlements ?? []),
+      settlement,
+    ],
+  };
+
+  setTransactions((previous) =>
+    previous.map((item) =>
+      item.noNota === transaction.noNota
+        ? {
+            ...item,
+            settlements: [
+              ...(item.settlements ?? []),
+              settlement,
+            ],
+          }
+        : item
+    )
+  );
+
+  setReceipt((previous) =>
+    previous?.noNota === transaction.noNota
+      ? {
+          ...previous,
+          settlements: [
+            ...(previous.settlements ?? []),
+            settlement,
+          ],
+        }
+      : previous
+  );
+
+  const remaining = Math.max(
+    0,
+    transactionReceivableOutstanding(
+      updatedTransaction
+    )
+  );
+
+  if (remaining === 0) {
+    toast.success(
+      `Piutang ${transaction.noNota} sudah LUNAS.`
+    );
+  } else {
+    toast.success(
+      `Pembayaran dicatat. Sisa piutang: ${formatCurrency(
+        remaining
+      )}`
+    );
+  }
+};
   const amountText = window.prompt(
     `Pembayaran piutang ${transaction.noNota}\n` +
       `Sisa yang harus dibayar: ${formatCurrency(outstanding)}\n\n` +
