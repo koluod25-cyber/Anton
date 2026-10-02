@@ -1391,6 +1391,78 @@ warrantyCode: transaction.warrantyCode,
       `OK = Kembalikan stok\n` +
       `Batal = Jangan kembalikan stok`
   );
+
+  const adjustFinance = window.confirm(
+    `SESUAIKAN KEUANGAN?\n\n` +
+      `OK = Hapus pengaruh keuangan transaksi ini\n` +
+      `Batal = Pertahankan pengaruh keuangan di neraca/laporan`
+  );
+
+  const confirmed = window.confirm(
+    `Konfirmasi penghapusan ${transaction.noNota}.\n\n` +
+      `Stok: ${
+        restoreStock
+          ? "DIKEMBALIKAN"
+          : "TIDAK diubah"
+      }\n` +
+      `Keuangan: ${
+        adjustFinance
+          ? "DISESUAIKAN"
+          : "DIPERTAHANKAN"
+      }\n\n` +
+      `Lanjutkan hapus transaksi?`
+  );
+
+  if (!confirmed) {
+    toast.info("Penghapusan transaksi dibatalkan.");
+    return;
+  }
+
+  if (restoreStock) {
+    setProducts((previous) =>
+      previous.map((product) => {
+        const item = transaction.items.find(
+          (entry) => entry.productId === product.id
+        );
+
+        return item && product.type === "spare"
+          ? {
+              ...product,
+              stock: Math.max(
+                0,
+                product.stock + item.qty
+              ),
+            }
+          : product;
+      })
+    );
+  }
+
+  if (adjustFinance) {
+    setTransactions((previous) =>
+      previous.filter(
+        (item) => item.noNota !== transaction.noNota
+      )
+    );
+  } else {
+    setTransactions((previous) =>
+      previous.map((item) =>
+        item.noNota === transaction.noNota
+          ? {
+              ...item,
+              deletedAt: new Date().toISOString(),
+            }
+          : item
+      )
+    );
+  }
+
+  setReceipt((previous) =>
+    previous?.noNota === transaction.noNota
+      ? null
+      : previous
+  );
+
   toast.success(
     `Transaksi ${transaction.noNota} dihapus dari daftar. ` +
       `${
@@ -1405,6 +1477,8 @@ warrantyCode: transaction.warrantyCode,
       }`
   );
 };
+
+const saveProduct = (event: React.FormEvent<HTMLFormElement>) => {
     const outstanding=transactionReceivableOutstanding(transaction); if(outstanding<=0){toast.info("Piutang sudah LUNAS.");return;}
     const raw=window.prompt(`SISA YANG HARUS DIBAYAR ${formatCurrency(outstanding)}`,String(outstanding)); if(raw===null)return; const amount=Math.min(outstanding,Math.max(0,Number(raw)||0)); if(!amount){toast.error("Jumlah pembayaran tidak valid.");return;}
     const method=(window.prompt("Metode pelunasan: Cash / Transfer / QRIS","Cash")||"") as TransactionSettlement["method"]; if(!["Cash","Transfer","QRIS"].includes(method)){toast.error("Metode tidak valid.");return;}
