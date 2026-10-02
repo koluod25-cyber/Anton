@@ -1384,6 +1384,99 @@ warrantyCode: transaction.warrantyCode,
     );
   }
 };
+    const deleteTransaction = (transaction: Transaction) => {
+  const restoreStock = window.confirm(
+    `Hapus transaksi ${transaction.noNota}.\n\n` +
+      `KEMBALIKAN STOK BARANG?\n\n` +
+      `OK = Kembalikan stok\n` +
+      `Batal = Jangan kembalikan stok`
+  );
+
+  const adjustFinance = window.confirm(
+    `SESUAIKAN KEUANGAN?\n\n` +
+      `OK = Hapus pengaruh keuangan transaksi ini\n` +
+      `Batal = Pertahankan pengaruh keuangan di neraca/laporan`
+  );
+
+  const confirmed = window.confirm(
+    `Konfirmasi penghapusan ${transaction.noNota}.\n\n` +
+      `Stok: ${
+        restoreStock
+          ? "DIKEMBALIKAN"
+          : "TIDAK diubah"
+      }\n` +
+      `Keuangan: ${
+        adjustFinance
+          ? "DISESUAIKAN"
+          : "DIPERTAHANKAN"
+      }\n\n` +
+      `Lanjutkan hapus transaksi?`
+  );
+
+  if (!confirmed) {
+    toast.info("Penghapusan transaksi dibatalkan.");
+    return;
+  }
+
+  if (restoreStock) {
+    setProducts((previous) =>
+      previous.map((product) => {
+        const item = transaction.items.find(
+          (entry) => entry.productId === product.id
+        );
+
+        return item && product.type === "spare"
+          ? {
+              ...product,
+              stock: Math.max(
+                0,
+                product.stock + item.qty
+              ),
+            }
+          : product;
+      })
+    );
+  }
+
+  if (adjustFinance) {
+    setTransactions((previous) =>
+      previous.filter(
+        (item) => item.noNota !== transaction.noNota
+      )
+    );
+  } else {
+    setTransactions((previous) =>
+      previous.map((item) =>
+        item.noNota === transaction.noNota
+          ? {
+              ...item,
+              deletedAt: new Date().toISOString(),
+            }
+          : item
+      )
+    );
+  }
+
+  setReceipt((previous) =>
+    previous?.noNota === transaction.noNota
+      ? null
+      : previous
+  );
+
+  toast.success(
+    `Transaksi ${transaction.noNota} dihapus dari daftar. ` +
+      `${
+        restoreStock
+          ? "Stok dikembalikan."
+          : "Stok tidak diubah."
+      } ` +
+      `${
+        adjustFinance
+          ? "Keuangan disesuaikan."
+          : "Pengaruh keuangan tetap dipertahankan."
+      }`
+  );
+};
   const restoreStock = window.confirm(
     `Hapus transaksi ${transaction.noNota}.\n\n` +
     `KEMBALIKAN STOK BARANG?\n\n` +
