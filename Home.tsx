@@ -1510,6 +1510,51 @@ const reportSystemBalances = useMemo(
   const handleBarcodeValue = (value: string) => { const normalized = value.trim(); const product = products.find(item => item.barcode === normalized || item.sku.toLowerCase() === normalized.toLowerCase()); if (!product) { triggerScanFeedback("not-found"); recordFailedScan(normalized, "not-found"); toast.error(`Barcode atau SKU “${normalized}” tidak ditemukan.`); return false; } if (product.type === "spare" && product.stock < 1) { triggerScanFeedback("out-of-stock"); recordFailedScan(normalized, "out-of-stock", product.name); toast.error("Stok barang tidak tersedia."); return false; } triggerScanSuccessFeedback(); addToCart(product.id); setBarcodeInput(""); setBarcodeOpen(false); setScannerOpen(false); navigate("pos"); toast.success(`${product.name} ditambahkan ke keranjang.`); return true; };
   const handleBarcode = () => { handleBarcodeValue(barcodeInput); };
   const handleProductBarcodeValue = (value: string) => { const normalized = value.trim(); if (!normalized) return false; const existing = products.find(item => item.barcode === normalized || item.sku.toLowerCase() === normalized.toLowerCase()); triggerScanSuccessFeedback(); setProductScannerOpen(false); if (existing) { setProductSkuDraft(existing.sku); setProductSkuInput(existing.sku); setProductEditor(existing); toast.success(`Produk ${existing.name} dibuka untuk diedit.`); } else { setProductBarcodeDraft(normalized); setProductSkuDraft(normalized); setProductSkuInput(normalized); setProductEditor("new"); toast.success(`Barcode ${normalized} siap untuk produk baru.`); } return true; };
+  const saveCashMovement = () => {
+  const amount = Math.round(Number(movementAmount.replace(/[^\d]/g, "")) || 0);
+
+    if (!movementDate) {
+      toast.error("Tanggal transaksi harus diisi.");
+      return;
+    }
+
+    if (!movementDescription.trim()) {
+      toast.error("Keterangan transaksi harus diisi.");
+      return;
+    }
+
+    if (amount <= 0) {
+      toast.error("Nominal transaksi harus lebih dari Rp0.");
+      return;
+    }
+
+   const category =
+      movementKind === "other_income"
+        ? "Pendapatan lain-lain"
+        : movementKind === "capital"
+          ? "Setoran modal pemilik"
+          : movementKind === "loan"
+            ? "Pinjaman"
+            : "Beban Operasional";
+
+   const movement: CashMovement = {
+      id: `MOV-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      date: movementDate,
+      kind: movementKind,
+      category,
+      description: movementDescription.trim(),
+      amount,
+      method: movementMethod,
+    };
+
+    setCashMovements(previous => [movement, ...previous]);
+    setMovementDescription("");
+    setMovementAmount("");
+    setMovementDate(localDateInputValue());
+
+    toast.success(`${category} sebesar ${formatCurrency(amount)} berhasil disimpan.`);
+  };
+      
   const completeTransaction = (openReceipt: boolean) => {
     if (!cart.length) { toast.error("Keranjang masih kosong."); return; }
     if (hasPaymentShortfall) { toast.error(`Pembayaran belum mencukupi. Kekurangan ${formatCurrency(total - allocatedPaymentTotal)}.`); return; }
