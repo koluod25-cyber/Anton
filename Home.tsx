@@ -620,8 +620,13 @@ const buildingCost = cashMovements
     totals.otherIncome -
     totals.hpp -
     totals.expenseTotal -
-    toolDepreciation -
-    buildingCost;
+      const netIncome =
+    totals.serviceRevenue +
+    totals.spareRevenue +
+    totals.salesDiscount +
+    totals.otherIncome -
+    totals.hpp -
+    totals.expenseTotal;
   const totalLiabilityEquity = liabilityTotal + modalTotal + netIncome;
   return {
     assetTotal,
