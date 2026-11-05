@@ -441,19 +441,77 @@ export const transactionRevenueNet = (transaction: Partial<Pick<Transaction, "su
   return revenue.serviceNet + revenue.spareNet;
 };
 
-export const summarizeTransactionTotals = (transactions: Transaction[]) => transactions.reduce((summary, transaction) => {
-  const revenue = transactionRevenueBreakdown(transaction); const p = normalizeTransactionPayments(transaction);
-  summary.serviceRevenue += revenue.serviceGross; summary.spareRevenue += revenue.spareGross; summary.serviceNetRevenue += revenue.serviceNet; summary.spareNetRevenue += revenue.spareNet; summary.hpp += transaction.hppTotal || 0; summary.salesDiscount -= revenue.effectiveDiscount; summary.taxPayable += calculateTransactionAmounts(transaction.subtotal || 0, transaction.discount || 0, transaction.tax || 0).taxAmount; summary.expenseTotal += transactionExpenseNet(transaction);
-  summary.cash += Math.max(
-  0,
-  p.cash - Math.max(0, transaction.change || 0)
-) + (transaction.settlements || [])
-  .filter(x => x.method === "Cash")
-  .reduce((a, x) => a + x.amount, 0);
-  summary.bank += p.transfer + p.qris + (transaction.settlements || []).filter(x => x.method !== "Cash").reduce((a,x) => a + x.amount, 0);
-  summary.receivables += Math.max(0, p.piutang - transactionSettlementTotal(transaction));
-  return summary;
-}, { cash: 0, bank: 0, receivables: 0, serviceRevenue: 0, spareRevenue: 0, serviceNetRevenue: 0, spareNetRevenue: 0, hpp: 0, salesDiscount: 0, taxPayable: 0, expenseTotal: 0 });
+export const summarizeTransactionTotals = (transactions: Transaction[]) =>
+  transactions.reduce((summary, transaction) => {
+    const revenue = transactionRevenueBreakdown(transaction);
+    const p = normalizeTransactionPayments(transaction);
+    const expense = transactionExpenseNet(transaction);
+
+    const isExpenseOnly =
+      revenue.serviceGross === 0 &&
+      revenue.spareGross === 0 &&
+      expense > 0;
+
+    const taxAmount = calculateTransactionAmounts(
+      transaction.subtotal || 0,
+      transaction.discount || 0,
+      transaction.tax || 0
+    ).taxAmount;
+
+    summary.serviceRevenue += revenue.serviceGross;
+    summary.spareRevenue += revenue.spareGross;
+    summary.serviceNetRevenue += revenue.serviceNet;
+    summary.spareNetRevenue += revenue.spareNet;
+    summary.hpp += transaction.hppTotal || 0;
+    summary.salesDiscount -= revenue.effectiveDiscount;
+    summary.taxPayable += taxAmount;
+    summary.expenseTotal += expense;
+
+    // Beban operasional adalah uang keluar.
+    // Penjualan tetap dihitung sebagai uang masuk.
+    const cashMovement = isExpenseOnly
+      ? -p.cash
+      : Math.max(0, p.cash - Math.max(0, transaction.change || 0));
+
+    const bankMovement = isExpenseOnly
+      ? -(p.transfer + p.qris)
+      : p.transfer + p.qris;
+
+    summary.cash +=
+      cashMovement +
+      (transaction.settlements || [])
+        .filter(x => x.method === "Cash")
+        .reduce((sum, x) => sum + x.amount, 0);
+
+    summary.bank +=
+      bankMovement +
+      (transaction.settlements || [])
+        .filter(x => x.method !== "Cash")
+        .reduce((sum, x) => sum + x.amount, 0);
+
+    // Beban yang sudah dibayar tidak boleh menjadi Piutang.
+    if (!isExpenseOnly) {
+      summary.receivables += Math.max(
+        0,
+        p.piutang - transactionSettlementTotal(transaction)
+      );
+    }
+
+    return summary;
+  }, {
+    cash: 0,
+    bank: 0,
+    receivables: 0,
+    serviceRevenue: 0,
+    spareRevenue: 0,
+    serviceNetRevenue: 0,
+    spareNetRevenue: 0,
+    hpp: 0,
+    salesDiscount: 0,
+    taxPayable: 0,
+    expenseTotal: 0
+  });
+        
 export const calculateReconciledInventoryCapital = (products: Product[], transactions: Transaction[], openingInventory: number) => {
   const hppSold = summarizeTransactionTotals(transactions).hpp;
   return totalInventoryValue(products) - openingInventory + hppSold;
