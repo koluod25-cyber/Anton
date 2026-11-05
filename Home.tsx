@@ -1806,7 +1806,7 @@ const reportSystemBalances = useMemo(
             : "border border-slate-200 bg-white text-slate-600"
         )}
       >
-        Penjualan
+        Pendapatan
       </button>
 
       <button
@@ -1841,6 +1841,43 @@ const reportSystemBalances = useMemo(
         Pengeluaran
       </button>
     </div>
+{cashierMode === "sale" && (
+  <div className="mb-4 grid grid-cols-2 gap-2">
+    <button
+      type="button"
+      onClick={() => {
+        setCashierRevenueType("jasa");
+        setCart([]);
+        setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierRevenueType === "jasa"
+          ? "bg-red-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Jasa
+    </button>
+
+    <button
+      type="button"
+      onClick={() => {
+        setCashierRevenueType("spare");
+        setCart([]);
+        setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierRevenueType === "spare"
+          ? "bg-blue-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Penjualan
+    </button>
+  </div>
+)}
 {cashierMode !== "sale" && (
   <div className="app-card space-y-4 p-5">
     <div>
