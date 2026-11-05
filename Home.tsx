@@ -1293,6 +1293,12 @@ warrantyCode: transaction.warrantyCode,
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
   const [paymentAmounts, setPaymentAmounts] = useState<TransactionPayments>({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
   const [paid, setPaid] = useState(0);
+  const [cashierMode, setCashierMode] = useState<"sale" | "income" | "expense">("sale");
+  const [movementKind, setMovementKind] = useState<CashMovementKind>("other_income");
+  const [movementDate, setMovementDate] = useState(() => localDateInputValue());
+  const [movementDescription, setMovementDescription] = useState("");
+  const [movementAmount, setMovementAmount] = useState("");
+  const [movementMethod, setMovementMethod] = useState<CashMovementMethod>("Cash"); 
   const [query, setQuery] = useState("");
   const [transactionQuery, setTransactionQuery] = useState("");
   const [reportPeriodFrom, setReportPeriodFrom] = useState("");
