@@ -540,11 +540,13 @@ export const summarizeTransactionTotals = (
   cashMovements.forEach(movement => {
     const amount = Math.max(0, Math.round(movement.amount || 0));
 
-    if (movement.method === "Cash") {
-      summary.cash += movement.kind === "expense" ? -amount : amount;
-    } else {
-      summary.bank += movement.kind === "expense" ? -amount : amount;
-    }
+        if (!(movement.kind === "expense" && movement.accountCode === "503")) {
+      if (movement.method === "Cash") {
+        summary.cash += movement.kind === "expense" ? -amount : amount;
+      } else {
+        summary.bank += movement.kind === "expense" ? -amount : amount;
+      }
+        }
 
     if (movement.kind === "other_income") {
       summary.otherIncome += amount;
