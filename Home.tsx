@@ -758,6 +758,9 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>(() => readStored("anton_products_v22", seedProducts));
   const [inventoryCapitalAdjustment, setInventoryCapitalAdjustment] = useState<number>(() => readStored("anton_inventory_capital_adjustment_v22", 0));
   const [transactions, setTransactions] = useState<Transaction[]>(() => readStored("anton_transactions_v22", []));
+  const [cashMovements, setCashMovements] = useState<CashMovement[]>(
+  () => readStored("anton_cash_movements_v1", [])
+);
   const [customAccounts, setCustomAccounts] = useState<Account[]>(() => readStored("anton_coa_v22", []));
   const [printer, setPrinter] = useState<PrinterSettings>(() => ({ ...defaultPrinter, ...readStored<Partial<PrinterSettings>>("anton_printer_v22", {}) }));
   const [printerBusy, setPrinterBusy] = useState(false);
