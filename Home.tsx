@@ -1839,7 +1839,89 @@ const reportSystemBalances = useMemo(
       >
         Pengeluaran
       </button>
-    </div><SectionHeading eyebrow="Pusat transaksi" title="Kasir POS" description="Tambahkan jasa atau sparepart, lalu selesaikan pembayaran dengan kembalian otomatis." /><div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,.75fr)]"><div className="app-card overflow-hidden"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4"><div><p className="panel-label">Katalog</p><h2 className="mt-1 font-extrabold">Produk & jasa aktif</h2></div><div className="flex gap-2"><label className="relative block"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari SKU / barcode" className="h-10 w-44 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-semibold outline-none transition focus:border-[#c7362f] focus:bg-white sm:w-52" /></label><button onClick={() => setBarcodeOpen(true)} className="btn-press flex h-10 items-center gap-1.5 rounded-xl bg-slate-900 px-3 text-xs font-extrabold text-white"><ScanLine size={15} /> Scan</button><button onClick={addTransportExpense} className="btn-press flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-xs font-extrabold text-white"><Wallet size={15} /> Transportasi</button></div></div><div className="thin-scrollbar grid max-h-[calc(100vh-225px)] min-h-[450px] grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2">{filteredProducts.map(product => <button key={product.id} onClick={() => addToCart(product.id)} className="btn-press group rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-[0_10px_25px_-18px_rgba(199,54,47,.55)]"><div className="flex items-start justify-between gap-3"><div className="flex flex-wrap gap-1.5"><span className="mono rounded-md bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-600">{product.sku}</span><span className={cn("rounded-md px-2 py-1 text-[9px] font-extrabold uppercase", product.type === "jasa" ? "bg-red-50 text-[#b62824]" : "bg-blue-50 text-blue-700")}>{product.type}</span></div><Plus className="text-slate-300 transition group-hover:text-[#c7362f]" size={17} /></div><p className="mt-3 min-h-10 text-[13px] font-extrabold leading-snug text-slate-800">{product.name}</p><div className="mt-2 flex justify-between text-[10px] font-semibold text-slate-500"><span>Stok {product.stock}</span><span>Modal {formatCurrency(product.cost)}</span></div><p className="mt-2 text-base font-extrabold tracking-[-.03em] text-slate-900">{formatCurrency(product.price)}</p><img src={barcodeSvg(product.barcode, 132, 25)} alt={`Barcode ${product.barcode}`} className="mt-3 h-[39px] w-[132px] rounded border border-slate-100" /></button>)}{!filteredProducts.length && <EmptyState label="Produk tidak ditemukan" />}</div></div>
+    </div>
+{cashierMode !== "sale" && (
+  <div className="app-card space-y-4 p-5">
+    <div>
+      <p className="panel-label">Pencatatan keuangan</p>
+      <h2 className="text-lg font-extrabold">
+        {cashierMode === "income" ? "Catat Pemasukan" : "Catat Pengeluaran"}
+      </h2>
+    </div>
+
+    {cashierMode === "income" && (
+      <label className="grid gap-1 text-xs font-bold text-slate-600">
+        Jenis pemasukan
+        <select
+          value={movementKind}
+          onChange={e => setMovementKind(e.target.value as CashMovementKind)}
+          className="field"
+        >
+          <option value="other_income">Pendapatan lain-lain</option>
+          <option value="capital">Setoran modal pemilik</option>
+          <option value="loan">Pinjaman</option>
+        </select>
+      </label>
+    )}
+
+    <label className="grid gap-1 text-xs font-bold text-slate-600">
+      Tanggal transaksi
+      <input
+        type="date"
+        value={movementDate}
+        onChange={e => setMovementDate(e.target.value)}
+        className="field"
+      />
+    </label>
+
+    <label className="grid gap-1 text-xs font-bold text-slate-600">
+      Keterangan
+      <input
+        type="text"
+        value={movementDescription}
+        onChange={e => setMovementDescription(e.target.value)}
+        placeholder="Contoh: Pembelian perlengkapan toko"
+        className="field"
+      />
+    </label>
+
+    <label className="grid gap-1 text-xs font-bold text-slate-600">
+      Nominal (Rp)
+      <input
+        type="number"
+        min="1"
+        value={movementAmount}
+        onChange={e => setMovementAmount(e.target.value)}
+        placeholder="Masukkan nominal"
+        className="field"
+      />
+    </label>
+
+    <label className="grid gap-1 text-xs font-bold text-slate-600">
+      Metode transaksi
+      <select
+        value={movementMethod}
+        onChange={e => setMovementMethod(e.target.value as CashMovementMethod)}
+        className="field"
+      >
+        <option value="Cash">Tunai / Kas</option>
+        <option value="Transfer">Transfer Bank</option>
+        <option value="QRIS">QRIS</option>
+      </select>
+    </label>
+
+    <button
+      type="button"
+      onClick={saveCashMovement}
+      className="btn-press w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-extrabold text-white"
+    >
+      Simpan {cashierMode === "income" ? "Pemasukan" : "Pengeluaran"}
+    </button>
+  </div>
+)}
+
+<div className={cashierMode === "sale" ? "" : "hidden"}>
+<SectionHeading eyebrow="Pusat transaksi" title="Kasir POS" description="Tambahkan jasa atau sparepart, lalu selesaikan pembayaran dengan kembalian otomatis." /><div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,.75fr)]"><div className="app-card overflow-hidden"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4"><div><p className="panel-label">Katalog</p><h2 className="mt-1 font-extrabold">Produk & jasa aktif</h2></div><div className="flex gap-2"><label className="relative block"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari SKU / barcode" className="h-10 w-44 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-semibold outline-none transition focus:border-[#c7362f] focus:bg-white sm:w-52" /></label><button onClick={() => setBarcodeOpen(true)} className="btn-press flex h-10 items-center gap-1.5 rounded-xl bg-slate-900 px-3 text-xs font-extrabold text-white"><ScanLine size={15} /> Scan</button><button onClick={addTransportExpense} className="btn-press flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-xs font-extrabold text-white"><Wallet size={15} /> Transportasi</button></div></div><div className="thin-scrollbar grid max-h-[calc(100vh-225px)] min-h-[450px] grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2">{filteredProducts.map(product => <button key={product.id} onClick={() => addToCart(product.id)} className="btn-press group rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-[0_10px_25px_-18px_rgba(199,54,47,.55)]"><div className="flex items-start justify-between gap-3"><div className="flex flex-wrap gap-1.5"><span className="mono rounded-md bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-600">{product.sku}</span><span className={cn("rounded-md px-2 py-1 text-[9px] font-extrabold uppercase", product.type === "jasa" ? "bg-red-50 text-[#b62824]" : "bg-blue-50 text-blue-700")}>{product.type}</span></div><Plus className="text-slate-300 transition group-hover:text-[#c7362f]" size={17} /></div><p className="mt-3 min-h-10 text-[13px] font-extrabold leading-snug text-slate-800">{product.name}</p><div className="mt-2 flex justify-between text-[10px] font-semibold text-slate-500"><span>Stok {product.stock}</span><span>Modal {formatCurrency(product.cost)}</span></div><p className="mt-2 text-base font-extrabold tracking-[-.03em] text-slate-900">{formatCurrency(product.price)}</p><img src={barcodeSvg(product.barcode, 132, 25)} alt={`Barcode ${product.barcode}`} className="mt-3 h-[39px] w-[132px] rounded border border-slate-100" /></button>)}{!filteredProducts.length && <EmptyState label="Produk tidak ditemukan" />}</div></div>
     <div className="app-card h-fit xl:sticky xl:top-[95px]"><div className="border-b border-slate-100 px-5 py-4"><p className="panel-label">Pembayaran</p><h2 className="mt-1 font-extrabold">Keranjang transaksi</h2></div><div className="space-y-3 p-5"><div className="grid gap-2 sm:grid-cols-2"><label className="grid gap-1 text-[10px] font-extrabold uppercase tracking-[.08em] text-slate-500 sm:col-span-2">Tanggal transaksi<input type="date" value={transactionDate} onChange={event => setTransactionDate(event.target.value)} required aria-label="Tanggal transaksi" className="field" /></label><input value={customer} onChange={event => setCustomer(event.target.value)} placeholder="Nama pelanggan" className="field" /><input value={phone} onChange={event => setPhone(event.target.value)} placeholder="Nomor telepon / WA" className="field" /><input value={address} onChange={event => setAddress(event.target.value)} placeholder="Alamat pelanggan" className="field sm:col-span-2" /></div><div className="thin-scrollbar max-h-52 space-y-2 overflow-y-auto pr-1">{cart.length ? cart.map(item => { const product = products.find(entry => entry.id === item.productId); if (!product) return null; return <div className="flex items-center gap-2 rounded-xl bg-slate-50 p-2.5" key={item.productId}><div className="min-w-0 flex-1"><p className="truncate text-xs font-extrabold">{product.name}</p><p className="mt-0.5 text-[10px] font-semibold text-slate-500">{formatCurrency(product.price)} × {item.qty}</p></div><div className="flex items-center gap-1"><button onClick={() => adjustQty(product.id, -1)} className="btn-press grid h-6 w-6 place-items-center rounded-md bg-white text-xs font-bold shadow-sm">−</button><span className="w-5 text-center text-xs font-extrabold">{item.qty}</span><button onClick={() => adjustQty(product.id, 1)} className="btn-press grid h-6 w-6 place-items-center rounded-md bg-white text-xs font-bold shadow-sm">+</button></div><button onClick={() => setCart(previous => previous.filter(entry => entry.productId !== product.id))} className="btn-press grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button></div>; }) : <div className="rounded-xl border border-dashed border-slate-200 py-7 text-center"><ShoppingCart className="mx-auto text-slate-300" size={21} /><p className="mt-2 text-xs font-semibold text-slate-400">Keranjang kosong — pilih produk</p></div>}</div><div className="rounded-2xl bg-slate-950 p-4 text-white"><Row label="Subtotal" value={formatCurrency(subtotal)} light /><label className="mt-2 flex items-center justify-between gap-3 text-xs font-semibold text-slate-300">Diskon (%)<input type="number" min="0" max="100" step="0.01" value={discountPercent || ""} onChange={event => setDiscountPercent(Math.min(100, Math.max(0, Number(event.target.value) || 0)))} className="w-24 rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-right text-xs font-bold text-white outline-none" /></label><label className="mt-2 flex items-center justify-between gap-3 text-xs font-semibold text-slate-300">Transportasi (Rp)<input type="number" min="0" value={transportasiAmount || ""} onChange={event => setTransportasiManual(event.target.value)} placeholder="0" className="w-28 rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-right text-xs font-bold text-white outline-none" /></label><label className="mt-2 flex items-center justify-between gap-3 text-xs font-semibold text-slate-300">Pajak (%)<input type="number" min="0" value={tax || ""} onChange={event => setTax(Number(event.target.value) || 0)} className="w-16 rounded-lg border border-white/15 bg-white/10 px-2 py-1 text-right text-xs font-bold text-white outline-none" /></label><div className="mt-3 border-t border-white/15 pt-3"><Row label="Total Bayar" value={formatCurrency(total)} strong light /></div></div><div><p className="panel-label mb-2">Metode pembayaran — bisa lebih dari satu</p><div className="grid grid-cols-2 gap-2">{([{id:"Cash",icon:Wallet,key:"cash"},{id:"Transfer",icon:CreditCard,key:"transfer"},{id:"QRIS",icon:QrCode,key:"qris"},{id:"Piutang",icon:FileClock,key:"piutang"}] as {id:Exclude<PaymentMethod,"Split">;icon:React.ElementType;key:keyof TransactionPayments}[]).map(m=><button key={m.id} onClick={()=>setPaymentAmounts(p=>({...p,[m.key]:p[m.key]||(m.key==="piutang"?0:Math.max(0,total-(p.cash+p.transfer+p.qris)))}))} className={cn("btn-press flex items-center justify-between rounded-xl border-2 px-3 py-2.5 text-xs font-extrabold",paymentAmounts[m.key]>0?"border-slate-900 bg-slate-900 text-white":"border-slate-100 bg-white text-slate-600")}><span className="flex items-center gap-2"><m.icon size={14}/>{m.id}</span><span>{formatCurrency(paymentAmounts[m.key])}</span></button>)}</div></div><div className="grid grid-cols-2 gap-2">{(["cash","transfer","qris","piutang"] as (keyof TransactionPayments)[]).map(key=><label key={key} className="grid gap-1 text-[10px] font-extrabold text-slate-500"><span>{key==="cash"?"Cash":key==="transfer"?"Transfer":key==="qris"?"QRIS":"Piutang"}</span><input type="number" min="0" value={paymentAmounts[key]||""} onChange={e=>setPaymentAmounts(p=>({...p,[key]:Math.max(0,Number(e.target.value)||0)}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold"/></label>)}</div><div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-bold"><div className="flex justify-between"><span>Dialokasikan</span><span>{formatCurrency(allocatedPaymentTotal)}</span></div><div className="mt-1 flex justify-between"><span>Kembalian</span><span>{formatCurrency(change)}</span></div><div className="mt-1 flex justify-between text-amber-700"><span>Sisa otomatis ke Piutang</span><span>{formatCurrency(effectiveReceivable)}</span></div></div><div className="grid grid-cols-2 gap-2 pt-1"><button onClick={() => completeTransaction(false)} className="btn-press rounded-xl bg-emerald-600 px-3 py-3 text-xs font-extrabold text-white shadow-md shadow-emerald-100">Simpan</button><button onClick={() => completeTransaction(true)} className="btn-press rounded-xl bg-[#c7362f] px-3 py-3 text-xs font-extrabold text-white shadow-md shadow-red-100">Simpan & Struk</button></div></div></div></div></div>;
         
   const Transactions = () => <div className="enter-panel"><SectionHeading eyebrow="Riwayat penjualan" title="Transaksi" description="Tinjau, cetak ulang, dan kelola pelunasan piutang." action={<button onClick={()=>downloadCsv([["No Nota","Tanggal","Pelanggan","Total","Metode"],...filteredTransactions.map(item=>[item.noNota,new Date(item.date).toLocaleString("id-ID"),item.customer,item.total,transactionPaymentLabel(item)])],"transaksi.csv")} className="btn-press rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"><Download size={14}/>Export</button>}/><div className="app-card overflow-hidden"><div className="border-b border-slate-100 p-4"><input value={transactionQuery} onChange={e=>setTransactionQuery(e.target.value)} placeholder="Cari nomor nota atau pelanggan" className="h-11 w-full rounded-xl bg-slate-100 px-3 text-xs font-semibold outline-none"/></div><div className="thin-scrollbar max-h-[calc(100vh-235px)] min-h-[440px] space-y-2 overflow-y-auto p-4">{filteredTransactions.map(transaction=>{const outstanding=transactionReceivableOutstanding(transaction);return <div key={transaction.noNota} className="flex flex-col gap-3 rounded-2xl border border-slate-200 p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="mono text-xs font-extrabold">{transaction.noNota}</p><PaymentBadge method={transaction.paymentMethod}/></div><p className="mt-1 text-[11px] text-slate-500">{transaction.customer} · {formatTransactionDate(transaction.date)}</p><p className="mt-2 text-[11px] text-slate-600">{transaction.items.map(item=>`${item.name} ×${item.qty}`).join(", ")}</p></div><div className="text-right"><p className="text-sm font-extrabold">{formatCurrency(transaction.total)}</p><p className="mt-1 text-[10px] text-slate-500">{transactionPaymentLabel(transaction)}</p><p className={cn("mt-1 text-[10px] font-extrabold",outstanding?"text-amber-700":"text-emerald-700")}>{outstanding?`SISA YANG HARUS DIBAYAR ${formatCurrency(outstanding)} · BELUM LUNAS`:"SISA YANG HARUS DIBAYAR Rp 0 · LUNAS"}</p><div className="mt-3 flex flex-wrap justify-end gap-2"><button onClick={()=>setReceipt(transaction)} className="btn-press rounded-lg bg-slate-900 px-3 py-2 text-[10px] font-extrabold text-white">Lihat struk</button>{outstanding>0&&<button onClick={()=>settleReceivable(transaction)} className="btn-press rounded-lg bg-amber-500 px-3 py-2 text-[10px] font-extrabold text-white">Bayar Piutang</button>}<button
