@@ -661,7 +661,7 @@ const buildingCost = cashMovements
     "103": totalInventoryValue(products),
     "104": totals.bank - funding.Bank - funding.QRIS,
     "105": -toolDepreciation,
-    "106": -buildingCost,
+    "106": 0,
     "201": funding.Hutang,
     "202": 0,
     "203": totals.taxPayable,
