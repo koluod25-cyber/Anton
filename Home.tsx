@@ -2212,29 +2212,121 @@ const reportSystemBalances = useMemo(
   product.stock,
   productTypeLabel(product.type)
 ])
-  const Accounts = () => <div className="enter-panel"><SectionHeading eyebrow="Akuntansi" title="Buku Besar COA" description="Saldo sistem dihitung ulang dari transaksi; akun tambahan dapat dikelola manual." action={<div className="flex flex-wrap gap-2"><button onClick={() => runReportExport("excel", () => downloadExcel(buildCoaExportRows(reportAccounts, reportPeriodPrinter), "buku-besar-coa.xls"), "Buku Besar COA berhasil diunduh dalam format Excel.")} disabled={!!reportExporting} aria-busy={reportExporting === "excel"} className="btn-press inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2.5 text-xs font-extrabold text-white disabled:cursor-wait disabled:opacity-60">{reportExporting === "excel" ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Download size={14} />}Excel</button><button onClick={() => runReportExport("pdf", () => printReport("Buku Besar COA", buildCoaExportRows(reportAccounts, reportPeriodPrinter), reportPeriodPrinter))} disabled={!!reportExporting} aria-busy={reportExporting === "pdf"} className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-700 px-3 py-2.5 text-xs font-extrabold text-white disabled:cursor-wait disabled:opacity-60">{reportExporting === "pdf" ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Printer size={14} />}PDF</button><button onClick={() => downloadCsv([["Kode", "Nama", "Tipe", "Saldo"], ...reportAccounts.map(account => [account.code, account.name, account.type, account.balance])], "coa.csv")} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"><Download size={14} />CSV</button><button onClick={() => setAccountEditor("new")} className="btn-press inline-flex items-center gap-2 rounded-xl bg-[#c7362f] px-3 py-2.5 text-xs font-extrabold text-white"><Plus size={15} />Akun</button></div>} /><ReportPeriodFilter from={reportPeriodFrom} to={reportPeriodTo} onFromChange={value => applyReportDate(setReportPeriodFrom, value)} onToChange={value => applyReportDate(setReportPeriodTo, value)} onRangeChange={applyReportRange} loading={reportLoading} onReset={() => applyReportRange({ from: "", to: "" })} /><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="app-card overflow-hidden"><div className="grid grid-cols-[70px_1fr_120px_86px] bg-slate-950 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[.12em] text-slate-300"><span>Kode</span><span>Akun</span><span className="text-right">Saldo</span><span /></div>{reportAccounts.map(account => <div className="grid grid-cols-[70px_1fr_120px_86px] items-center border-b border-slate-100 px-4 py-3.5" key={account.code}><span className="mono text-xs font-extrabold text-slate-700">{account.code}</span><div><p className="text-xs font-extrabold text-slate-800">{account.name}</p><span className="mt-1 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{account.type}</span></div><p className="text-right text-xs font-extrabold">{formatCurrency(account.balance)}</p>
-   <div className="ml-auto flex items-center gap-1">
-  {!accountBase.some(entry => entry.code === account.code) && (
-    <>
-      <button
-        onClick={() => setAccountEditor(account)}
-        className="btn-press rounded-lg bg-slate-100 p-2 text-slate-600"
-        aria-label={`Edit akun ${account.code}`}
-        title="Edit akun"
-      >
-        <Pencil size={13} />
-      </button>
-      <button
-        onClick={() => deleteAccount(account)}
-        className="btn-press rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100"
-        aria-label={`Hapus akun ${account.code}`}
-        title="Hapus akun"
-      >
-        <Trash2 size={13} />
-      </button>
-    </>
-  )}
-</div>
+  const Accounts = () => (
+  <div className="enter-panel">
+    <SectionHeading
+      eyebrow="Akuntansi"
+      title="Buku Besar COA"
+      description="Saldo sistem dihitung ulang dari transaksi; akun tambahan dapat dikelola manual."
+      action={
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => runReportExport("excel", () => downloadExcel(buildCoaExportRows(reportAccounts, reportPeriodPrinter), "buku-besar-coa.xls"), "Buku Besar COA berhasil diunduh dalam format Excel.")}
+            disabled={!!reportExporting}
+            className="btn-press rounded-xl bg-emerald-700 px-3 py-2.5 text-xs font-extrabold text-white"
+          >
+            <Download size={14} /> Excel
+          </button>
+          <button
+            onClick={() => runReportExport("pdf", () => printReport("Buku Besar COA", buildCoaExportRows(reportAccounts, reportPeriodPrinter), reportPeriodPrinter))}
+            disabled={!!reportExporting}
+            className="btn-press rounded-xl bg-slate-700 px-3 py-2.5 text-xs font-extrabold text-white"
+          >
+            <Printer size={14} /> PDF
+          </button>
+          <button
+            onClick={() => downloadCsv([["Kode", "Nama", "Tipe", "Saldo"], ...reportAccounts.map(account => [account.code, account.name, account.type, account.balance])], "coa.csv")}
+            className="btn-press rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"
+          >
+            <Download size={14} /> CSV
+          </button>
+          <button
+            onClick={() => setAccountEditor("new")}
+            className="btn-press rounded-xl bg-[#c7362f] px-3 py-2.5 text-xs font-extrabold text-white"
+          >
+            <Plus size={15} /> Akun
+          </button>
+        </div>
+      }
+    />
+
+    <ReportPeriodFilter
+      from={reportPeriodFrom}
+      to={reportPeriodTo}
+      onFromChange={value => applyReportDate(setReportPeriodFrom, value)}
+      onToChange={value => applyReportDate(setReportPeriodTo, value)}
+      onRangeChange={applyReportRange}
+      loading={reportLoading}
+      onReset={() => applyReportRange({ from: "", to: "" })}
+    />
+
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="app-card overflow-hidden">
+        <div className="grid grid-cols-[70px_1fr_120px_86px] bg-slate-950 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[.12em] text-slate-300">
+          <span>Kode</span>
+          <span>Akun</span>
+          <span className="text-right">Saldo</span>
+          <span />
+        </div>
+
+        {reportAccounts.map(account => (
+          <div
+            className="grid grid-cols-[70px_1fr_120px_86px] items-center border-b border-slate-100 px-4 py-3.5"
+            key={account.code}
+          >
+            <span className="mono text-xs font-extrabold text-slate-700">
+              {account.code}
+            </span>
+
+            <div>
+              <p className="text-xs font-extrabold text-slate-800">
+                {account.name}
+              </p>
+              <span className="mt-1 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">
+                {account.type}
+              </span>
+            </div>
+
+            <p className="text-right text-xs font-extrabold">
+              {formatCurrency(account.balance)}
+            </p>
+
+            <div className="ml-auto flex items-center gap-1">
+              {!accountBase.some(entry => entry.code === account.code) && (
+                <>
+                  <button
+                    onClick={() => setAccountEditor(account)}
+                    className="btn-press rounded-lg bg-slate-100 p-2 text-slate-600"
+                    aria-label={`Edit akun ${account.code}`}
+                    title="Edit akun"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => deleteAccount(account)}
+                    className="btn-press rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100"
+                    aria-label={`Hapus akun ${account.code}`}
+                    title="Hapus akun"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="app-card p-5">
+        <p className="panel-label">Formula V22</p>
+        <h2 className="mt-1 font-extrabold">Penyesuaian otomatis</h2>
+        <p className="mt-3 text-xs leading-relaxed text-slate-600">
+          Persediaan dihitung dari <b>stok × modal</b>. Penyusutan Alat dicatat melalui Kasir → Pengeluaran ke COA 503. Biaya Gedung dicatat melalui Kasir → Pengeluaran ke COA 504.
+        </p>
+      </div>
+    </div>
+  </div>
+);
     
   const BalanceSheet = () => <div className="enter-panel"><SectionHeading eyebrow="Akuntansi" title="Neraca & selisih" description="Periksa kesetaraan Aktiva dengan Pasiva, Modal, dan Laba Ditahan." action={<div className="flex flex-wrap gap-2"><button onClick={() => runReportExport("excel", () => downloadExcel(buildBalanceSheetExportRows(reportAccounts, { assetTotal: reportAssetTotal, liabilityTotal: reportLiabilityTotal, equityTotal: reportEquityTotal, netIncome: reportNetIncome, totalLiabilityEquity: reportTotalLiabilityEquity, difference: reportBalanceDifference }, reportPeriodPrinter), "neraca.xls"), "Neraca berhasil diunduh dalam format Excel.")} disabled={!!reportExporting} aria-busy={reportExporting === "excel"} className="btn-press inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2.5 text-xs font-extrabold text-white disabled:cursor-wait disabled:opacity-60">{reportExporting === "excel" ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Download size={14} />}Excel</button><button onClick={() => runReportExport("pdf", () => printReport("Neraca", buildBalanceSheetExportRows(reportAccounts, { assetTotal: reportAssetTotal, liabilityTotal: reportLiabilityTotal, equityTotal: reportEquityTotal, netIncome: reportNetIncome, totalLiabilityEquity: reportTotalLiabilityEquity, difference: reportBalanceDifference }, reportPeriodPrinter), reportPeriodPrinter))} disabled={!!reportExporting} aria-busy={reportExporting === "pdf"} className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-700 px-3 py-2.5 text-xs font-extrabold text-white disabled:cursor-wait disabled:opacity-60">{reportExporting === "pdf" ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" /> : <Printer size={14} />}PDF</button></div>} /><ReportPeriodFilter from={reportPeriodFrom} to={reportPeriodTo} onFromChange={value => applyReportDate(setReportPeriodFrom, value)} onToChange={value => applyReportDate(setReportPeriodTo, value)} onRangeChange={applyReportRange} loading={reportLoading} onReset={() => applyReportRange({ from: "", to: "" })} /><div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_360px]"><div className="grid gap-4 md:grid-cols-2"><AccountColumn title="Aktiva" dot="bg-emerald-500" accounts={reportAccounts.filter(account => account.type === "Aktiva")} total={reportAssetTotal} totalLabel="Total Aktiva" /><AccountColumn title="Pasiva & Modal" dot="bg-amber-500" accounts={[...reportAccounts.filter(account => account.type === "Pasiva"), ...reportAccounts.filter(account => account.type === "Modal"), { code: "—", name: "Laba Ditahan (Pend. − Beban)", type: "Modal", balance: reportNetIncome }]} total={reportTotalLiabilityEquity} totalLabel="Total Pasiva" /></div><div className={cn("app-card p-5", reportBalanceDifference === 0 ? "border-emerald-200" : "border-red-200")}><p className="panel-label">Kontrol keseimbangan</p><h2 className="mt-1 text-lg font-extrabold">Ringkasan neraca</h2><div className={cn("mt-5 rounded-2xl border-2 p-4", reportBalanceDifference === 0 ? "border-emerald-400 bg-emerald-50 text-emerald-800" : "border-red-400 bg-red-50 text-red-800")}><div className="flex items-center justify-between"><span className="text-xs font-extrabold uppercase tracking-[.1em]">Selisih</span>{reportBalanceDifference === 0 ? <CircleCheck size={20} /> : <CircleAlert size={20} />}</div><p className="mt-3 text-2xl font-extrabold tracking-[-.04em]">{formatCurrency(reportBalanceDifference)}</p><p className="mt-1 text-xs font-bold">{reportBalanceDifference === 0 ? "Balance — buku seimbang" : "Belum balance — periksa transaksi"}</p></div><div className="mt-5 space-y-2.5"><Row label="Total Aktiva" value={formatCurrency(reportAssetTotal)} /><Row label="Hutang" value={formatCurrency(reportLiabilityTotal)} /><Row label="Modal" value={formatCurrency(reportEquityTotal)} /><Row label="Modal persediaan" value={formatCurrency(reportSystemBalances["301"] || 0)} /><Row label="Penyusutan Alat" value={formatCurrency(reportSystemBalances["503"] || 0)} /><Row label="Biaya Gedung" value={formatCurrency(reportSystemBalances["504"] || 0)} /><Row label="Laba Bersih" value={formatCurrency(reportNetIncome)} /><div className="border-t border-slate-200 pt-2"><Row label="Total Pasiva" value={formatCurrency(reportTotalLiabilityEquity)} strong /></div></div><p className="mt-5 rounded-xl bg-slate-50 p-3 text-[10px] leading-relaxed text-slate-500">Aktiva = Kas ({formatCurrency(reportSystemBalances["101"] || 0)}) + Piutang ({formatCurrency(reportSystemBalances["102"] || 0)}) + Persediaan ({formatCurrency(reportSystemBalances["103"] || 0)}) + Bank ({formatCurrency(reportSystemBalances["104"] || 0)}) − Akumulasi Penyusutan Alat ({formatCurrency(Math.abs(reportSystemBalances["105"] || 0))}) − Biaya Gedung ({formatCurrency(Math.abs(reportSystemBalances["106"] || 0))}).</p></div></div></div>;
 
