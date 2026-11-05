@@ -502,6 +502,47 @@ export const summarizeTransactionTotals = (transactions: Transaction[]) =>
       cashMovement +
       (transaction.settlements || [])
         .filter(x => x.method === "Cash")
+export const summarizeTransactionTotals = (
+  transactions: Transaction[],
+  cashMovements: CashMovement[] = []
+) => {
+  const summary = transactions.reduce((summary, transaction) => {
+    const revenue = transactionRevenueBreakdown(transaction);
+    const p = normalizeTransactionPayments(transaction);
+    const expense = transactionExpenseNet(transaction);
+
+    const isExpenseOnly =
+      revenue.serviceGross === 0 &&
+      revenue.spareGross === 0 &&
+      expense > 0;
+
+    const taxAmount = calculateTransactionAmounts(
+      transaction.subtotal || 0,
+      transaction.discount || 0,
+      transaction.tax || 0
+    ).taxAmount;
+
+    summary.serviceRevenue += revenue.serviceGross;
+    summary.spareRevenue += revenue.spareGross;
+    summary.serviceNetRevenue += revenue.serviceNet;
+    summary.spareNetRevenue += revenue.spareNet;
+    summary.hpp += transaction.hppTotal || 0;
+    summary.salesDiscount -= revenue.effectiveDiscount;
+    summary.taxPayable += taxAmount;
+    summary.expenseTotal += expense;
+
+    const cashMovement = isExpenseOnly
+      ? -p.cash
+      : Math.max(0, p.cash - Math.max(0, transaction.change || 0));
+
+    const bankMovement = isExpenseOnly
+      ? -(p.transfer + p.qris)
+      : p.transfer + p.qris;
+
+    summary.cash +=
+      cashMovement +
+      (transaction.settlements || [])
+        .filter(x => x.method === "Cash")
         .reduce((sum, x) => sum + x.amount, 0);
 
     summary.bank +=
@@ -510,7 +551,6 @@ export const summarizeTransactionTotals = (transactions: Transaction[]) =>
         .filter(x => x.method !== "Cash")
         .reduce((sum, x) => sum + x.amount, 0);
 
-    // Beban yang sudah dibayar tidak boleh menjadi Piutang.
     if (!isExpenseOnly) {
       summary.receivables += Math.max(
         0,
@@ -530,8 +570,40 @@ export const summarizeTransactionTotals = (transactions: Transaction[]) =>
     hpp: 0,
     salesDiscount: 0,
     taxPayable: 0,
-    expenseTotal: 0
+    expenseTotal: 0,
+    otherIncome: 0,
+    capitalContribution: 0,
+    loanPayable: 0
   });
+
+  cashMovements.forEach(movement => {
+    const amount = Math.max(0, Math.round(movement.amount || 0));
+
+    if (movement.method === "Cash") {
+      summary.cash += movement.kind === "expense" ? -amount : amount;
+    } else {
+      summary.bank += movement.kind === "expense" ? -amount : amount;
+    }
+
+    if (movement.kind === "other_income") {
+      summary.otherIncome += amount;
+    }
+
+    if (movement.kind === "capital") {
+      summary.capitalContribution += amount;
+    }
+
+    if (movement.kind === "loan") {
+      summary.loanPayable += amount;
+    }
+
+    if (movement.kind === "expense") {
+      summary.expenseTotal += amount;
+    }
+  });
+
+  return summary;
+};
         
 export const calculateReconciledInventoryCapital = (products: Product[], transactions: Transaction[], openingInventory: number) => {
   const hppSold = summarizeTransactionTotals(transactions).hpp;
