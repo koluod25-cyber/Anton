@@ -1319,24 +1319,64 @@ warrantyCode: transaction.warrantyCode,
   [transactions, cashMovements]
 );
   const { serviceNetRevenue, spareNetRevenue } = totals;
+ 
   const accountBase = useMemo<Account[]>(() => {
     const inventory = totalInventoryValue(products);
     const openingInventory = totalInventoryValue(seedProducts);
     const funding = calculateCapitalSourceBalances(products);
-    const cash = OPENING_CASH + totals.cash - funding.Kas, { bank, receivables, serviceRevenue, spareRevenue, serviceNetRevenue, spareNetRevenue, hpp, salesDiscount, taxPayable, expenseTotal } = totals;
+    const {
+      cash: cashMovementTotal,
+      bank,
+      receivables,
+      serviceRevenue,
+      spareRevenue,
+      serviceNetRevenue,
+      spareNetRevenue,
+      salesDiscount,
+      taxPayable,
+      expenseTotal,
+      otherIncome,
+      capitalContribution,
+      loanPayable,
+      hpp,
+    } = totals;
+
+    const cash = OPENING_CASH + cashMovementTotal - funding.Kas;
     const toolDepreciation = totalToolDepreciation(products);
     const buildingCost = totalBuildingCost(products);
-    const reconciledInventoryCapital = calculateReconciledInventoryCapital(products, transactions, openingInventory);
-    const modalAccountBalance = calculateModalAccountBalance(products, transactions, openingInventory);
+    const modalAccountBalance = calculateModalAccountBalance(
+      products,
+      transactions,
+      openingInventory
+    );
+
     return [
-      { code: "101", name: "Kas", type: "Aktiva", balance: cash }, { code: "102", name: "Piutang Usaha", type: "Aktiva", balance: receivables - funding.Piutang },
-      { code: "103", name: "Persediaan Barang", type: "Aktiva", balance: inventory }, { code: "104", name: "Bank / QRIS", type: "Aktiva", balance: bank - funding.Bank - funding.QRIS }, { code: "105", name: "Akumulasi Penyusutan Alat", type: "Aktiva", balance: -toolDepreciation }, { code: "106", name: "Biaya Gedung", type: "Aktiva", balance: -buildingCost },
-      { code: "201", name: "Hutang Usaha", type: "Pasiva", balance: funding.Hutang }, { code: "202", name: "Hutang Bank", type: "Pasiva", balance: 0 }, { code: "203", name: "Hutang Pajak", type: "Pasiva", balance: taxPayable },
-      { code: "301", name: "Modal", type: "Modal", balance: modalAccountBalance - nonModalCapitalFunding(products) }, { code: "401", name: "Pendapatan Jasa", type: "Pendapatan", balance: serviceRevenue },
-      { code: "402", name: "Pendapatan Penjualan", type: "Pendapatan", balance: spareRevenue }, { code: "403", name: "Diskon", type: "Pendapatan", balance: salesDiscount },
-      { code: "501", name: "Beban Operasional", type: "Beban", balance: expenseTotal }, { code: "502", name: "HPP", type: "Beban", balance: hpp }, { code: "503", name: "Penyusutan Alat", type: "Beban", balance: toolDepreciation }, { code: "504", name: "Biaya Gedung", type: "Beban", balance: buildingCost },
+      { code: "101", name: "Kas", type: "Aktiva", balance: cash },
+      { code: "102", name: "Piutang Usaha", type: "Aktiva", balance: receivables - funding.Piutang },
+      { code: "103", name: "Persediaan Barang", type: "Aktiva", balance: inventory },
+      { code: "104", name: "Bank / QRIS", type: "Aktiva", balance: bank - funding.Bank - funding.QRIS },
+      { code: "105", name: "Akumulasi Penyusutan Alat", type: "Aktiva", balance: -toolDepreciation },
+      { code: "106", name: "Biaya Gedung", type: "Aktiva", balance: -buildingCost },
+
+      { code: "201", name: "Hutang Usaha", type: "Pasiva", balance: funding.Hutang },
+      { code: "202", name: "Hutang Bank", type: "Pasiva", balance: 0 },
+      { code: "203", name: "Hutang Pajak", type: "Pasiva", balance: taxPayable },
+      { code: "204", name: "Hutang Pinjaman", type: "Pasiva", balance: loanPayable },
+
+      { code: "301", name: "Modal", type: "Modal", balance: modalAccountBalance - nonModalCapitalFunding(products) + capitalContribution },
+
+      { code: "401", name: "Pendapatan Jasa", type: "Pendapatan", balance: serviceRevenue },
+      { code: "402", name: "Pendapatan Penjualan", type: "Pendapatan", balance: spareRevenue },
+      { code: "403", name: "Diskon", type: "Pendapatan", balance: salesDiscount },
+      { code: "404", name: "Pendapatan Lain-lain", type: "Pendapatan", balance: otherIncome },
+
+      { code: "501", name: "Beban Operasional", type: "Beban", balance: expenseTotal },
+      { code: "502", name: "HPP", type: "Beban", balance: hpp },
+      { code: "503", name: "Penyusutan Alat", type: "Beban", balance: toolDepreciation },
+      { code: "504", name: "Biaya Gedung", type: "Beban", balance: buildingCost },
     ];
   }, [products, transactions, inventoryCapitalAdjustment, totals]);
+    
   const accounts = useMemo(() => [...accountBase, ...customAccounts.filter(account => !accountBase.some(base => base.code === account.code))], [accountBase, customAccounts]);
   const reportTransactions = useMemo(() => transactions.filter(transaction => transactionMatchesPeriod(transaction.date, reportPeriodFrom, reportPeriodTo)), [transactions, reportPeriodFrom, reportPeriodTo]);
   const reportSystemBalances = useMemo(() => calculateSystemAccountBalances(products, reportTransactions, totalInventoryValue(seedProducts)), [products, reportTransactions]);
