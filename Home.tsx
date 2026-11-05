@@ -1314,7 +1314,10 @@ warrantyCode: transaction.warrantyCode,
     };
   }, []);
 
-  const totals = useMemo(() => summarizeTransactionTotals(transactions), [transactions]);
+  const totals = useMemo(
+  () => summarizeTransactionTotals(transactions, cashMovements),
+  [transactions, cashMovements]
+);
   const { serviceNetRevenue, spareNetRevenue } = totals;
   const accountBase = useMemo<Account[]>(() => {
     const inventory = totalInventoryValue(products);
