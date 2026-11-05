@@ -1295,6 +1295,7 @@ warrantyCode: transaction.warrantyCode,
   const [paid, setPaid] = useState(0);
   const [cashierMode, setCashierMode] = useState<"sale" | "income" | "expense">("sale");
   const [cashierRevenueType, setCashierRevenueType] = useState<"jasa" | "spare">("jasa");
+  const [showRevenueTypeOptions, setShowRevenueTypeOptions] = useState(false);
   const [movementKind, setMovementKind] = useState<CashMovementKind>("other_income");
   const [movementDate, setMovementDate] = useState(() => localDateInputValue());
   const [movementDescription, setMovementDescription] = useState("");
@@ -1821,38 +1822,143 @@ const reportSystemBalances = useMemo(
         Pendapatan
       </button>
 
+      <
+const Pos = () => <div className="enter-panel">
+  <div className="mb-4 grid grid-cols-3 gap-2">
+    <button
+      type="button"
+      onClick={() => {
+        setCashierMode("sale");
+        setShowRevenueTypeOptions(value => !value);
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierMode === "sale"
+          ? "bg-red-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Pendapatan
+    </button>
+
+    <button
+      type="button"
+      onClick={() => {
+        setCashierMode("income");
+        setShowRevenueTypeOptions(false);
+        setMovementKind("other_income");
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierMode === "income"
+          ? "bg-emerald-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Pemasukan
+    </button>
+
+    <button
+      type="button"
+      onClick={() => {
+        setCashierMode("expense");
+        setShowRevenueTypeOptions(false);
+        setMovementKind("expense");
+      }}
+
+const Pos = () => <div className="enter-panel">
+  <div className="mb-4 grid grid-cols-3 gap-2">
+    <button
+      type="button"
+      onClick={() => {
+        setCashierMode("sale");
+        setShowRevenueTypeOptions(value => !value);
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierMode === "sale"
+          ? "bg-red-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Pendapatan
+    </button>
+
+    <button
+      type="button"
+      onClick={() => {
+        setCashierMode("income");
+        setShowRevenueTypeOptions(false);
+        setMovementKind("other_income");
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierMode === "income"
+          ? "bg-emerald-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Pemasukan
+    </button>
+
+    <button
+      type="button"
+      onClick={() => {
+        setCashierMode("expense");
+        setShowRevenueTypeOptions(false);
+        setMovementKind("expense");
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierMode === "expense"
+          ? "bg-amber-500 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Pengeluaran
+    </button>
+  </div>
+
+  {cashierMode === "sale" && showRevenueTypeOptions && (
+    <div className="mb-4 grid grid-cols-2 gap-2">
       <button
         type="button"
         onClick={() => {
-          setCashierMode("income");
-          setMovementKind("other_income");
+          setCashierRevenueType("jasa");
+          setCart([]);
+          setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
+          setShowRevenueTypeOptions(false);
         }}
         className={cn(
           "rounded-xl px-3 py-3 text-xs font-extrabold",
-          cashierMode === "income"
-            ? "bg-emerald-600 text-white"
+          cashierRevenueType === "jasa"
+            ? "bg-red-600 text-white"
             : "border border-slate-200 bg-white text-slate-600"
         )}
       >
-        Pemasukan
+        Jasa
       </button>
 
       <button
         type="button"
         onClick={() => {
-          setCashierMode("expense");
-          setMovementKind("expense");
+          setCashierRevenueType("spare");
+          setCart([]);
+          setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
+          setShowRevenueTypeOptions(false);
         }}
         className={cn(
           "rounded-xl px-3 py-3 text-xs font-extrabold",
-          cashierMode === "expense"
-            ? "bg-amber-500 text-white"
+          cashierRevenueType === "spare"
+            ? "bg-blue-600 text-white"
             : "border border-slate-200 bg-white text-slate-600"
         )}
       >
-        Pengeluaran
+        Penjualan
       </button>
     </div>
+  )}
+    
 {cashierMode === "sale" && (
   <div className="mb-4 grid grid-cols-2 gap-2">
     <button
