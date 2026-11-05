@@ -1432,8 +1432,19 @@ warrantyCode: transaction.warrantyCode,
     } = totals;
 
     const cash = OPENING_CASH + cashMovementTotal - funding.Kas;
-    const toolDepreciation = totalToolDepreciation(products);
-    const buildingCost = totalBuildingCost(products);
+    const toolDepreciation = cashMovements
+  .filter(movement =>
+    movement.kind === "expense" &&
+    movement.accountCode === "503"
+  )
+  .reduce((sum, movement) => sum + movement.amount, 0);
+
+const buildingCost = cashMovements
+  .filter(movement =>
+    movement.kind === "expense" &&
+    movement.accountCode === "504"
+  )
+  .reduce((sum, movement) => sum + movement.amount, 0);
     const modalAccountBalance = calculateModalAccountBalance(
       products,
       transactions,
