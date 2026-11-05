@@ -1456,7 +1456,18 @@ warrantyCode: transaction.warrantyCode,
       { code: "403", name: "Diskon", type: "Pendapatan", balance: salesDiscount },
       { code: "404", name: "Pendapatan Lain-lain", type: "Pendapatan", balance: otherIncome },
 
-      { code: "501", name: "Beban Operasional", type: "Beban", balance: expenseTotal },
+            {
+        code: "501",
+        name: "Beban Operasional",
+        type: "Beban",
+        balance: expenseTotal - cashMovements
+          .filter(movement =>
+            movement.kind === "expense" &&
+            movement.accountCode &&
+            movement.accountCode !== "501"
+          )
+          .reduce((sum, movement) => sum + movement.amount, 0),
+      },
       { code: "502", name: "HPP", type: "Beban", balance: hpp },
       { code: "503", name: "Penyusutan Alat", type: "Beban", balance: toolDepreciation },
       { code: "504", name: "Biaya Gedung", type: "Beban", balance: buildingCost },
