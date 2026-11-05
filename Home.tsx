@@ -1516,8 +1516,33 @@ const reportSystemBalances = useMemo(
   ),
   [products, reportTransactions, reportCashMovements]
 );
-    
-  const reportAccounts = useMemo(() => accounts.map(account => reportSystemBalances[account.code] === undefined ? account : { ...account, balance: reportSystemBalances[account.code] }), [accounts, reportSystemBalances]);
+  const reportAccounts = useMemo(() => accounts.map(account => {
+  const systemBalance = reportSystemBalances[account.code];
+
+  if (systemBalance !== undefined) {
+    return { ...account, balance: systemBalance };
+  }
+
+  const customAccount = customAccounts.find(
+    entry => entry.code === account.code
+  );
+
+  if (!customAccount) return account;
+
+  const periodExpense = customAccount.type === "Beban"
+    ? reportCashMovements
+        .filter(movement =>
+          movement.kind === "expense" &&
+          movement.accountCode === account.code
+        )
+        .reduce((sum, movement) => sum + movement.amount, 0)
+    : 0;
+
+  return {
+    ...account,
+    balance: customAccount.balance + periodExpense,
+  };
+}), [accounts, reportSystemBalances, customAccounts, reportCashMovements]);
   const reportAssetTotal = reportAccounts.filter(account => account.type === "Aktiva").reduce((sum, account) => sum + account.balance, 0);
   const reportLiabilityTotal = reportAccounts.filter(account => account.type === "Pasiva").reduce((sum, account) => sum + account.balance, 0);
   const reportRevenueTotal = reportAccounts.filter(account => account.type === "Pendapatan").reduce((sum, account) => sum + account.balance, 0);
