@@ -1336,6 +1336,7 @@ warrantyCode: transaction.warrantyCode,
   const [cashierMode, setCashierMode] = useState<"sale" | "income" | "expense">("sale");
   const [cashierRevenueType, setCashierRevenueType] = useState<"jasa" | "spare">("jasa");
   const [showRevenueTypeOptions, setShowRevenueTypeOptions] = useState(false);
+  const [movementAccountCode, setMovementAccountCode] = useState("501");
   const [movementKind, setMovementKind] = useState<CashMovementKind>("other_income");
   const [movementDate, setMovementDate] = useState(() => localDateInputValue());
   const [movementDescription, setMovementDescription] = useState("");
@@ -1995,7 +1996,25 @@ const reportSystemBalances = useMemo(
         className="field"
       />
     </label>
-
+    {cashierMode === "expense" && (
+  <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+    Masukkan ke akun COA
+    <select
+      name="expenseAccountCode"
+      value={movementAccountCode}
+      onChange={e => setMovementAccountCode(e.target.value)}
+      className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none"
+    >
+      {accounts
+        .filter(account => account.type === "Beban")
+        .map(account => (
+          <option key={account.code} value={account.code}>
+            {account.code} - {account.name}
+          </option>
+        ))}
+    </select>
+  </label>
+)}
     <label className="grid gap-1 text-xs font-bold text-slate-600">
       Nominal (Rp)
       <input
