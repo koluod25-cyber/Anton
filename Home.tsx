@@ -594,20 +594,51 @@ export const transactionMatchesPeriod = (transactionDate: string | number | Date
   const dateKey = date.toISOString().slice(0, 10);
   return (!from || dateKey >= from) && (!to || dateKey <= to);
 };
-export const calculateSystemAccountBalances = (products: Product[], transactions: Transaction[], openingInventory: number, openingCash = OPENING_CASH) => {
-  const totals = summarizeTransactionTotals(transactions);
+
+export const calculateSystemAccountBalances = (
+  products: Product[],
+  transactions: Transaction[],
+  openingInventory: number,
+  openingCash = OPENING_CASH,
+  cashMovements: CashMovement[] = []
+) => {
+  const totals = summarizeTransactionTotals(transactions, cashMovements);
   const funding = calculateCapitalSourceBalances(products);
   const nonModalFunding = nonModalCapitalFunding(products);
   const toolDepreciation = totalToolDepreciation(products);
   const buildingCost = totalBuildingCost(products);
-  const reconciledInventoryCapital = calculateReconciledInventoryCapital(products, transactions, openingInventory);
+
   return {
-    "101": openingCash + totals.cash - funding.Kas, "102": totals.receivables - funding.Piutang, "103": totalInventoryValue(products), "104": totals.bank - funding.Bank - funding.QRIS,
-    "105": -toolDepreciation, "106": -buildingCost, "201": funding.Hutang, "202": 0, "203": totals.taxPayable,
-    "301": calculateModalAccountBalance(products, transactions, openingInventory, openingCash) - nonModalFunding, "401": totals.serviceRevenue, "402": totals.spareRevenue, "403": totals.salesDiscount,
-    "501": totals.expenseTotal, "502": totals.hpp, "503": toolDepreciation, "504": buildingCost,
+    "101": openingCash + totals.cash - funding.Kas,
+    "102": totals.receivables - funding.Piutang,
+    "103": totalInventoryValue(products),
+    "104": totals.bank - funding.Bank - funding.QRIS,
+    "105": -toolDepreciation,
+    "106": -buildingCost,
+    "201": funding.Hutang,
+    "202": 0,
+    "203": totals.taxPayable,
+    "204": totals.loanPayable,
+    "301":
+      calculateModalAccountBalance(
+        products,
+        transactions,
+        openingInventory,
+        openingCash
+      ) -
+      nonModalFunding +
+      totals.capitalContribution,
+    "401": totals.serviceRevenue,
+    "402": totals.spareRevenue,
+    "403": totals.salesDiscount,
+    "404": totals.otherIncome,
+    "501": totals.expenseTotal,
+    "502": totals.hpp,
+    "503": toolDepreciation,
+    "504": buildingCost,
   } as Record<string, number>;
 };
+    
 const localDateInputValue = (date = new Date()) => { const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return offsetDate.toISOString().slice(0, 10); };
 export function transactionDateToIso(dateValue: string, now = new Date()) { const [year, month, day] = dateValue.split("-").map(Number); if (!year || !month || !day) return now.toISOString(); const result = new Date(now); result.setFullYear(year, month - 1, day); return result.toISOString(); }
 const cn = (...values: (string | boolean | null | undefined)[]) => values.filter(Boolean).join(" ");
