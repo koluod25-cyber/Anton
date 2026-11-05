@@ -613,14 +613,7 @@ const buildingCost = cashMovements
     reconciledInventoryCapital -
     nonModalCapitalFunding(products) +
     totals.capitalContribution;
-  const netIncome =
-    totals.serviceRevenue +
-    totals.spareRevenue +
-    totals.salesDiscount +
-    totals.otherIncome -
-    totals.hpp -
-    totals.expenseTotal -
-      const netIncome =
+    const netIncome =
     totals.serviceRevenue +
     totals.spareRevenue +
     totals.salesDiscount +
