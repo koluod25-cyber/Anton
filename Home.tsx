@@ -1950,52 +1950,100 @@ const Pos = () => <div className="enter-panel">
         className={cn(
           "rounded-xl px-3 py-3 text-xs font-extrabold",
           cashierRevenueType === "spare"
-            ? "bg-blue-600 text-white"
+
+  const Pos = () => <div className="enter-panel">
+    <div className="mb-4 grid grid-cols-3 gap-2">
+      <button
+        type="button"
+        onClick={() => {
+          setCashierMode("sale");
+          setShowRevenueTypeOptions(value => !value);
+        }}
+        className={cn(
+          "rounded-xl px-3 py-3 text-xs font-extrabold",
+          cashierMode === "sale"
+            ? "bg-red-600 text-white"
             : "border border-slate-200 bg-white text-slate-600"
         )}
       >
-        Penjualan
+        Pendapatan
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setCashierMode("income");
+          setShowRevenueTypeOptions(false);
+          setMovementKind("other_income");
+        }}
+        className={cn(
+          "rounded-xl px-3 py-3 text-xs font-extrabold",
+          cashierMode === "income"
+            ? "bg-emerald-600 text-white"
+            : "border border-slate-200 bg-white text-slate-600"
+        )}
+      >
+        Pemasukan
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setCashierMode("expense");
+          setShowRevenueTypeOptions(false);
+          setMovementKind("expense");
+        }}
+        className={cn(
+          "rounded-xl px-3 py-3 text-xs font-extrabold",
+          cashierMode === "expense"
+            ? "bg-amber-500 text-white"
+            : "border border-slate-200 bg-white text-slate-600"
+        )}
+      >
+        Pengeluaran
       </button>
     </div>
-  )}
-    
-{cashierMode === "sale" && (
-  <div className="mb-4 grid grid-cols-2 gap-2">
-    <button
-      type="button"
-      onClick={() => {
-        setCashierRevenueType("jasa");
-        setCart([]);
-        setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
-      }}
-      className={cn(
-        "rounded-xl px-3 py-3 text-xs font-extrabold",
-        cashierRevenueType === "jasa"
-          ? "bg-red-600 text-white"
-          : "border border-slate-200 bg-white text-slate-600"
-      )}
-    >
-      Jasa
-    </button>
 
-    <button
-      type="button"
-      onClick={() => {
-        setCashierRevenueType("spare");
-        setCart([]);
-        setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
-      }}
-      className={cn(
-        "rounded-xl px-3 py-3 text-xs font-extrabold",
-        cashierRevenueType === "spare"
-          ? "bg-blue-600 text-white"
-          : "border border-slate-200 bg-white text-slate-600"
-      )}
-    >
-      Penjualan
-    </button>
-  </div>
-)}
+    {cashierMode === "sale" && showRevenueTypeOptions && (
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setCashierRevenueType("jasa");
+            setCart([]);
+            setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
+            setShowRevenueTypeOptions(false);
+          }}
+          className={cn(
+            "rounded-xl px-3 py-3 text-xs font-extrabold",
+            cashierRevenueType === "jasa"
+              ? "bg-red-600 text-white"
+              : "border border-slate-200 bg-white text-slate-600"
+          )}
+        >
+          Jasa
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setCashierRevenueType("spare");
+            setCart([]);
+            setPaymentAmounts({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
+            setShowRevenueTypeOptions(false);
+          }}
+          className={cn(
+            "rounded-xl px-3 py-3 text-xs font-extrabold",
+            cashierRevenueType === "spare"
+              ? "bg-blue-600 text-white"
+              : "border border-slate-200 bg-white text-slate-600"
+          )}
+        >
+          Penjualan
+        </button>
+      </div>
+    )}
+      
 {cashierMode !== "sale" && (
   <div className="app-card space-y-4 p-5">
     <div>
