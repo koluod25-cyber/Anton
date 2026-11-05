@@ -2076,7 +2076,7 @@ const reportSystemBalances = useMemo(
     >
       {accounts.filter(account =>
   account.type === "Beban" &&
-  !["502", "503", "504"].includes(account.code)
+  account.code !== "502"
 )
         .map(account => (
           <option key={account.code} value={account.code}>
