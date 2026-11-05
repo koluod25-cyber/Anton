@@ -1906,7 +1906,73 @@ const reportSystemBalances = useMemo(
       }`
   );
 };
-  const saveProduct = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); const product: Product = { id: productEditor === "new" ? `p${Date.now()}` : (productEditor as Product).id, sku: String(form.get("sku") || "").trim(), barcode: String(form.get("barcode") || "").trim(), name: String(form.get("name") || ""), price: Number(form.get("price") || 0), cost: Math.max(0, Number(form.get("cost") || 0)), stock: Math.max(0, Number(form.get("stock") || 0)), type: String(form.get("type")) as ProductType, capitalSource: String(form.get("capitalSource") || "Kas") as CapitalSource, depreciation: Math.max(0, Number(form.get("depreciation") || 0)), buildingCost: Math.max(0, Number(form.get("buildingCost") || 0)) }; const duplicateSku = products.some(entry => entry.id !== product.id && entry.sku.trim().toLowerCase() === product.sku.toLowerCase()); if (duplicateSku) { toast.error(`SKU ${product.sku} sudah digunakan produk lain. Silakan gunakan SKU berbeda.`); return; } const duplicateBarcode = hasDuplicateProductBarcode(products, product); if (duplicateBarcode) { toast.error(`Barcode ${product.barcode} sudah digunakan produk lain.`); return; } const previousProduct = productEditor === "new" ? null : productEditor as Product; const delta = inventoryCapitalDelta(previousProduct, product); setProducts(previous => productEditor === "new" ? [...previous, product] : previous.map(entry => entry.id === product.id ? product : entry)); if (delta !== 0) setInventoryCapitalAdjustment(previous => previous + delta); setProductEditor(null); toast.success(delta !== 0 ? `Data produk disimpan. Modal Buku Besar ${delta > 0 ? "bertambah" : "berkurang"} (Modal/HPP) ${formatCurrency(Math.abs(delta))}.` : "Data produk disimpan."); };
+  const saveProduct = (event: React.FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
+
+  const form = new FormData(event.currentTarget);
+
+  const product: Product = {
+    id:
+      productEditor === "new"
+        ? `p${Date.now()}`
+        : (productEditor as Product).id,
+    sku: String(form.get("sku") || "").trim(),
+    barcode: String(form.get("barcode") || "").trim(),
+    name: String(form.get("name") || ""),
+    price: Number(form.get("price") || 0),
+    cost: Math.max(0, Number(form.get("cost") || 0)),
+    stock: Math.max(0, Number(form.get("stock") || 0)),
+    type: String(form.get("type")) as ProductType,
+    capitalSource: String(
+      form.get("capitalSource") || "Kas"
+    ) as CapitalSource,
+  };
+
+  const duplicateSku = products.some(
+    entry =>
+      entry.id !== product.id &&
+      entry.sku.trim().toLowerCase() === product.sku.toLowerCase()
+  );
+
+  if (duplicateSku) {
+    toast.error(
+      `SKU ${product.sku} sudah digunakan produk lain. Silakan gunakan SKU berbeda.`
+    );
+    return;
+  }
+
+  const duplicateBarcode = hasDuplicateProductBarcode(products, product);
+
+  if (duplicateBarcode) {
+    toast.error(`Barcode ${product.barcode} sudah digunakan produk lain.`);
+    return;
+  }
+
+  const previousProduct =
+    productEditor === "new" ? null : (productEditor as Product);
+
+  const delta = inventoryCapitalDelta(previousProduct, product);
+
+  setProducts(previous =>
+    productEditor === "new"
+      ? [...previous, product]
+      : previous.map(entry =>
+          entry.id === product.id ? product : entry
+        )
+  );
+
+  if (delta !== 0) {
+    setInventoryCapitalAdjustment(previous => previous + delta);
+  }
+
+  setProductEditor(null);
+
+  toast.success(
+    delta !== 0
+      ? `Data produk disimpan. Modal Buku Besar ${delta > 0 ? "bertambah" : "berkurang"} (Modal/HPP) ${formatCurrency(Math.abs(delta))}.`
+      : "Data produk disimpan."
+  );
+};
   const saveAccount = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); const account: Account = { code: String(form.get("code") || "").trim(), name: String(form.get("name") || "").trim(), type: String(form.get("type")) as AccountType, balance: Number(form.get("balance") || 0) }; const isNew = accountEditor === "new"; const originalCode = !isNew && accountEditor ? (accountEditor as Account).code : null; if (!account.code || !account.name) { toast.error("Kode dan nama akun wajib diisi."); return; } if (!isNew && originalCode && accountBase.some(entry => entry.code === originalCode)) { toast.error("Akun sistem dikelola otomatis dan tidak dapat diedit."); return; } if (accounts.some(entry => entry.code === account.code && entry.code !== originalCode)) { toast.error("Kode akun sudah digunakan."); return; } setCustomAccounts(previous => upsertCustomAccount(previous, account, isNew ? null : originalCode)); setAccountEditor(null); toast.success("Akun COA disimpan."); }; const deleteAccount = (account: Account) => { if (accountBase.some(entry => entry.code === account.code)) { toast.error("Akun sistem tidak dapat dihapus."); return; } if (!window.confirm(`Hapus akun ${account.code} - ${account.name}?`)) return; setCustomAccounts(previous => removeCustomAccount(previous, account.code)); toast.success("Akun COA dihapus."); };
   const uploadLogo = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 1_048_576) { toast.error("Ukuran logo maksimum 1MB."); return; } const reader = new FileReader(); reader.onload = () => { setLogo(String(reader.result)); toast.success("Logo toko diperbarui."); }; reader.readAsDataURL(file); };
   const saveOpname = (goToBalance: boolean) => { setProducts(previous => { const next = previous.map(product => stockCount[product.id] === undefined || stockCount[product.id] === "" ? product : { ...product, stock: Math.max(0, Number(stockCount[product.id])) }); const delta = next.reduce((sum, product, index) => sum + inventoryCapitalDelta(previous[index], product), 0); if (delta !== 0) setInventoryCapitalAdjustment(value => value + delta); return next; }); setStockCount({}); localStorage.removeItem("anton_opname_v22"); toast.success("Stok opname disimpan dan Modal Buku Besar disesuaikan."); if (goToBalance) navigate("neraca"); };
