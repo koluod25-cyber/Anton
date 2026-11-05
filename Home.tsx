@@ -1474,8 +1474,24 @@ warrantyCode: transaction.warrantyCode,
     ];
   }, [products, transactions, inventoryCapitalAdjustment, totals]);
     
-  const accounts = useMemo(() => [...accountBase, ...customAccounts.filter(account => !accountBase.some(base => base.code === account.code))], [accountBase, customAccounts]);
-  
+    const accounts = useMemo(() => [
+    ...accountBase,
+    ...customAccounts
+      .filter(account => !accountBase.some(base => base.code === account.code))
+      .map(account => ({
+        ...account,
+        balance: account.balance + (
+          account.type === "Beban"
+            ? cashMovements
+                .filter(movement =>
+                  movement.kind === "expense" &&
+                  movement.accountCode === account.code
+                )
+                .reduce((sum, movement) => sum + movement.amount, 0)
+            : 0
+        ),
+      })),
+  ], [accountBase, customAccounts, cashMovements]);
 const reportTransactions = useMemo(
   () => transactions.filter(transaction =>
     transactionMatchesPeriod(transaction.date, reportPeriodFrom, reportPeriodTo)
