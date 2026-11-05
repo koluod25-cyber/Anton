@@ -2843,7 +2843,152 @@ const reportSystemBalances = useMemo(
 <div className="min-h-screen bg-[#f8f8f6] text-slate-900">{Sidebar()}{sidebarOpen && <button aria-label="Tutup menu" onClick={() => setSidebarOpen(false)} className="no-print fixed inset-0 z-40 bg-slate-950/45 lg:hidden" />}<div className="lg:pl-[278px]">{Header()}<main className="px-4 py-6 sm:px-6 lg:px-8">{activePage === "dashboard" && Dashboard()}{activePage === "pos" && Pos()}{activePage === "transaksi" && Transactions()}{activePage === "produk" && Products()}{activePage === "coa" && Accounts()}{activePage === "neraca" && BalanceSheet()}{activePage === "labarugi" && ProfitLoss()}{activePage === "opname" && StockOpname()}{activePage === "scan-history" && FailedScanHistory()}{activePage === "setting" && Setting()}</main></div></div>
     <Modal open={barcodeOpen} onClose={() => setBarcodeOpen(false)}><p className="panel-label">Scan produk</p><h2 className="mt-1 text-lg font-extrabold">Scan barcode</h2><div className="mt-4 grid h-36 place-items-center rounded-2xl bg-slate-950 text-center text-xs font-semibold text-slate-400"><ScanLine size={24} className="mb-1" /><span>Gunakan kamera HP untuk membaca barcode.<br />Jika kamera tidak tersedia, masukkan kode manual.</span></div><button onClick={() => setScannerOpen(true)} className="btn-press mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#c7362f] py-3 text-xs font-extrabold text-white"><ScanLine size={15} />Buka kamera HP</button><input autoFocus value={barcodeInput} onChange={event => setBarcodeInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter") handleBarcode(); }} placeholder="Contoh: 880101 atau SPR-001" className="mt-4 h-11 w-full rounded-xl bg-slate-100 px-3 text-sm font-bold outline-none focus:ring-2 focus:ring-red-100" /><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={handleBarcode} className="btn-press rounded-xl bg-blue-700 py-3 text-xs font-extrabold text-white">Pakai</button><button onClick={() => setBarcodeOpen(false)} className="btn-press rounded-xl bg-slate-100 py-3 text-xs font-extrabold">Batal</button></div></Modal>
     <BarcodeScannerModal open={scannerOpen} onClose={() => setScannerOpen(false)} onDetected={handleBarcodeValue} />
-    
+    <Modal
+  open={productEditor !== null}
+  onClose={() => setProductEditor(null)}
+>
+  <p className="panel-label">Master data inventaris</p>
+
+  <h2 className="mt-1 text-lg font-extrabold">
+    {productEditor === "new" ? "Tambah produk / jasa" : "Edit produk / jasa"}
+  </h2>
+
+  <form onSubmit={saveProduct} className="mt-5 space-y-3">
+    <FormInput
+      name="sku"
+      label="SKU"
+      required
+      value={productSkuInput}
+      onChange={event => setProductSkuInput(event.target.value)}
+    />
+
+    <div className="rounded-lg px-3 py-2 text-[11px] font-bold">
+      {productSkuStatus === "duplicate" ? (
+        <span className="text-red-600">
+          SKU sudah digunakan produk lain.
+        </span>
+      ) : productSkuStatus === "available" ? (
+        <span className="text-emerald-700">
+          SKU tersedia.
+        </span>
+      ) : (
+        <span className="text-slate-400">
+          Masukkan SKU produk.
+        </span>
+      )}
+    </div>
+
+    <FormInput
+      name="barcode"
+      label="Barcode"
+      defaultValue={
+        productEditor !== "new" && productEditor
+          ? productEditor.barcode
+          : productBarcodeDraft
+      }
+    />
+
+    <FormInput
+      name="name"
+      label="Nama produk / jasa"
+      required
+      defaultValue={
+        productEditor !== "new" && productEditor
+          ? productEditor.name
+          : ""
+      }
+    />
+
+    <div className="grid grid-cols-2 gap-3">
+      <FormInput
+        name="price"
+        label="Harga jual (Rp)"
+        type="number"
+        required
+        defaultValue={
+          productEditor !== "new" && productEditor
+            ? productEditor.price
+            : ""
+        }
+      />
+
+      <FormInput
+        name="cost"
+        label="Modal / HPP (Rp)"
+        type="number"
+        defaultValue={
+          productEditor !== "new" && productEditor
+            ? productEditor.cost
+            : ""
+        }
+      />
+
+      <FormInput
+        name="stock"
+        label="Stok"
+        type="number"
+        defaultValue={
+          productEditor !== "new" && productEditor
+            ? productEditor.stock
+            : 0
+        }
+      />
+    </div>
+
+    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+      Sumber modal persediaan
+      <select
+        name="capitalSource"
+        defaultValue={
+          productEditor !== "new" && productEditor
+            ? productCapitalSource(productEditor)
+            : "Kas"
+        }
+        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none"
+      >
+        {(["Kas", "Hutang", "Bank", "QRIS", "Piutang", "Modal"] as CapitalSource[]).map(source => (
+          <option key={source} value={source}>
+            {source}
+          </option>
+        ))}
+      </select>
+    </label>
+
+    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+      Tipe produk
+      <select
+        name="type"
+        defaultValue={
+          productEditor !== "new" && productEditor
+            ? productEditor.type
+            : "spare"
+        }
+        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none"
+      >
+        <option value="spare">Sparepart / Barang</option>
+        <option value="jasa">Jasa</option>
+        <option value="beban">Beban Operasional</option>
+      </select>
+    </label>
+
+    <div className="grid grid-cols-2 gap-2 pt-2">
+      <button
+        type="submit"
+        className="btn-press rounded-xl bg-slate-900 py-3 text-xs font-extrabold text-white"
+      >
+        Simpan Produk
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setProductEditor(null)}
+        className="btn-press rounded-xl bg-slate-100 py-3 text-xs font-extrabold"
+      >
+        Batal
+      </button>
+    </div>
+  </form>
+</Modal>
     <Modal open={accountEditor !== null} onClose={() => setAccountEditor(null)}><p className="panel-label">Akuntansi</p><h2 className="mt-1 text-lg font-extrabold">{accountEditor === "new" ? "Tambah akun" : "Edit akun"}</h2><form onSubmit={saveAccount} className="mt-5 space-y-3"><FormInput name="code" label="Kode akun" required defaultValue={accountEditor !== "new" && accountEditor ? accountEditor.code : ""} /><FormInput name="name" label="Nama akun" required defaultValue={accountEditor !== "new" && accountEditor ? accountEditor.name : ""} /><label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">Tipe akun<select name="type" defaultValue={accountEditor !== "new" && accountEditor ? accountEditor.type : "Aktiva"} className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none">{(["Aktiva", "Pasiva", "Modal", "Pendapatan", "Beban"] as AccountType[]).map(type => <option key={type}>{type}</option>)}</select></label><FormInput name="balance" label="Saldo" type="number" defaultValue={accountEditor !== "new" && accountEditor ? accountEditor.balance : ""} /><div className="grid grid-cols-2 gap-2 pt-2"><button type="submit" className="btn-press rounded-xl bg-slate-900 py-3 text-xs font-extrabold text-white">Simpan akun</button><button type="button" onClick={() => setAccountEditor(null)} className="btn-press rounded-xl bg-slate-100 py-3 text-xs font-extrabold">Batal</button></div></form></Modal>
     <Modal open={installHelpOpen} onClose={() => setInstallHelpOpen(false)}>
       <div className="pr-6"><p className="panel-label">Anton Service POS</p><h2 className="mt-1 text-lg font-extrabold">Download / Install Aplikasi</h2><p className="mt-2 text-xs leading-relaxed text-slate-500">Gunakan tombol instalasi browser untuk mengunduh dan memasang Anton POS sebagai aplikasi di perangkat ini.</p></div><div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs leading-relaxed text-red-800"><p className="font-extrabold">Cara tercepat</p><p className="mt-1">Pada Chrome/Edge, pilih <b>Install</b> pada dialog browser atau ikon instalasi di address bar. Data kasir tetap tersimpan di aplikasi.</p></div>
