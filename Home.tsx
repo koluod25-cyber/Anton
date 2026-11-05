@@ -33,6 +33,27 @@ type TransactionSettlement = {
   method: "Cash" | "Transfer" | "QRIS";
 };
 
+type CashMovementKind =
+  | "other_income"
+  | "capital"
+  | "loan"
+  | "expense";
+
+type CashMovementMethod =
+  | "Cash"
+  | "Transfer"
+  | "QRIS";
+
+type CashMovement = {
+  id: string;
+  date: string;
+  kind: CashMovementKind;
+  category: string;
+  description: string;
+  amount: number;
+  method: CashMovementMethod;
+};
+
 type TransactionItem = {
   productId: string;
   name: string;
