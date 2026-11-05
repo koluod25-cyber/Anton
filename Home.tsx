@@ -2201,7 +2201,166 @@ const reportSystemBalances = useMemo(
   <Trash2 size={12} />
   Hapus
 </button></div></div></div>})}{!filteredTransactions.length&&<EmptyState label="Belum ada transaksi yang cocok"/>}</div></div></div>;
+    const Products = () => (
+    <div className="enter-panel">
+      <SectionHeading
+        eyebrow="Master data"
+        title="Produk & jasa"
+        description="Kelola harga jual, Modal/HPP, barcode, dan stok seluruh layanan serta barang."
+        action={
+          <div className="flex gap-2">
+            <button
+              onClick={() =>
+                downloadCsv(
+                  [
+                    ["SKU", "Barcode", "Nama", "Harga Jual", "Modal/HPP", "Stok", "Tipe"],
+                    ...products.map(product => [
+                      product.sku,
+                      product.barcode,
+                      product.name,
+                      product.price,
+                      product.cost,
+                      product.stock,
+                      productTypeLabel(product.type)
+                    ])
+                  ],
+                  "produk.csv"
+                )
+              }
+              className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"
+            >
+              <Download size={14} /> Export
+            </button>
 
+            <button
+              onClick={() => {
+                setProductBarcodeDraft("");
+                setProductSkuDraft("");
+                setProductScannerOpen(true);
+              }}
+              className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-extrabold text-white"
+            >
+              <ScanLine size={15} /> Scan
+            </button>
+
+            <button
+              onClick={() => {
+                setProductBarcodeDraft("");
+                setProductSkuDraft("");
+                setProductSkuInput("");
+                setProductEditor("new");
+              }}
+              className="btn-press inline-flex items-center gap-2 rounded-xl bg-[#c7362f] px-3 py-2.5 text-xs font-extrabold text-white"
+            >
+              <Plus size={15} /> Tambah
+            </button>
+          </div>
+        }
+      />
+
+      <div className="app-card overflow-hidden">
+        <BarcodeScannerModal
+          open={productScannerOpen}
+          onClose={() => setProductScannerOpen(false)}
+          onDetected={handleProductBarcodeValue}
+        />
+
+        <div className="relative h-28 overflow-hidden border-b border-slate-100">
+          <img
+            src={INVENTORY_IMAGE}
+            alt="Rak inventori barang"
+            className="h-full w-full object-cover opacity-75"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/45 to-transparent" />
+          <p className="absolute bottom-4 left-5 max-w-xs text-sm font-extrabold text-white">
+            Katalog terhubung dengan stok, Modal/HPP, dan perhitungan laporan.
+          </p>
+        </div>
+
+        <div className="grid gap-3 p-4 xl:grid-cols-2">
+          {products.map(product => (
+            <div
+              key={product.id}
+              className="flex gap-3 rounded-2xl border border-slate-200 p-4"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="mono rounded-md bg-slate-100 px-2 py-1 text-[9px] font-bold">
+                    {product.sku}
+                  </span>
+                  <span className={cn(
+                    "rounded-md px-2 py-1 text-[9px] font-extrabold uppercase",
+                    product.type === "jasa"
+                      ? "bg-red-50 text-[#b62824]"
+                      : "bg-blue-50 text-blue-700"
+                  )}>
+                    {productTypeLabel(product.type)}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    Stok {product.stock}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm font-extrabold">
+                  {product.name}
+                </p>
+
+                <p className="mt-1 text-xs font-extrabold">
+                  Harga jual {formatCurrency(product.price)}
+                  <span className="ml-1 font-semibold text-slate-400">
+                    · Modal/HPP {formatCurrency(product.cost)}
+                  </span>
+                </p>
+
+                <img
+                  src={barcodeSvg(product.barcode, 180, 30)}
+                  alt={`Barcode ${product.barcode}`}
+                  className="mt-3 h-[49px] w-[180px] rounded border border-slate-100"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <button
+                  onClick={() => {
+                    setProductSkuDraft(product.sku);
+                    setProductSkuInput(product.sku);
+                    setProductEditor(product);
+                  }}
+                  className="btn-press rounded-lg bg-slate-900 p-2 text-white"
+                  aria-label={`Edit ${product.name}`}
+                >
+                  <Pencil size={14} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Hapus ${product.name}?`)) {
+                      const removedValue = inventoryValue(product);
+                      setProducts(previous =>
+                        previous.filter(entry => entry.id !== product.id)
+                      );
+                      if (removedValue !== 0) {
+                        setInventoryCapitalAdjustment(value => value - removedValue);
+                      }
+                      toast.success(
+                        removedValue !== 0
+                          ? `Produk dihapus dan Modal/HPP persediaan berkurang ${formatCurrency(removedValue)}.`
+                          : "Produk dihapus."
+                      );
+                    }
+                  }}
+                  className="btn-press rounded-lg bg-slate-100 p-2 text-slate-600"
+                  aria-label={`Hapus ${product.name}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
   const Accounts = () => (
   <div className="enter-panel">
     <SectionHeading
