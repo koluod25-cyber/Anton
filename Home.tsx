@@ -1487,8 +1487,7 @@ const buildingCost = cashMovements
       { code: "503", name: "Penyusutan Alat", type: "Beban", balance: toolDepreciation },
       { code: "504", name: "Biaya Gedung", type: "Beban", balance: buildingCost },
     ];
-  }, [products, transactions, inventoryCapitalAdjustment, totals]);
-    
+  }, [products, transactions, inventoryCapitalAdjustment, totals, cashMovements]);
     const accounts = useMemo(() => [
     ...accountBase,
     ...customAccounts
