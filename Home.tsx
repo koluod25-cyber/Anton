@@ -1261,6 +1261,7 @@ warrantyCode: transaction.warrantyCode,
   useEffect(() => writeStored("anton_products_v22", products), [products]);
   useEffect(() => writeStored("anton_inventory_capital_adjustment_v22", inventoryCapitalAdjustment), [inventoryCapitalAdjustment]);
   useEffect(() => writeStored("anton_transactions_v22", transactions), [transactions]);
+  useEffect(() => writeStored("anton_cash_movements_v1", cashMovements), [cashMovements]);
   useEffect(() => writeStored("anton_coa_v22", customAccounts), [customAccounts]);
   useEffect(() => writeStored("anton_printer_v22", printer), [printer]);
   useEffect(() => writeStored("anton_logo_v22", logo), [logo]);
