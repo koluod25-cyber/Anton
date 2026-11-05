@@ -49,6 +49,7 @@ type CashMovement = {
   date: string;
   kind: CashMovementKind;
   category: string;
+  accountCode?: string;
   description: string;
   amount: number;
   method: CashMovementMethod;
