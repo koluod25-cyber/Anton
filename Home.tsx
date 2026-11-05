@@ -672,7 +672,13 @@ export const calculateSystemAccountBalances = (
     "402": totals.spareRevenue,
     "403": totals.salesDiscount,
     "404": totals.otherIncome,
-    "501": totals.expenseTotal,
+    "501": totals.expenseTotal - cashMovements
+        .filter(movement =>
+          movement.kind === "expense" &&
+          movement.accountCode &&
+          movement.accountCode !== "501"
+        )
+        .reduce((sum, movement) => sum + movement.amount, 0),
     "502": totals.hpp,
     "503": toolDepreciation,
     "504": buildingCost,
