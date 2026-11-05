@@ -1642,7 +1642,18 @@ const reportSystemBalances = useMemo(
 
     toast.success(`${category} sebesar ${formatCurrency(amount)} berhasil disimpan.`);
   };
-      
+      const deleteCashMovement = (movement: CashMovement) => {
+    if (movement.kind !== "expense") return;
+
+    if (!window.confirm(
+      `Hapus pengeluaran "${movement.description}" sebesar ${formatCurrency(movement.amount)}?`
+    )) return;
+
+    setCashMovements(previous =>
+      previous.filter(item => item.id !== movement.id)
+    );
+    toast.success("Transaksi pengeluaran berhasil dihapus.");
+  };   
   const completeTransaction = (openReceipt: boolean) => {
     if (!cart.length) { toast.error("Keranjang masih kosong."); return; }
     if (hasPaymentShortfall) { toast.error(`Pembayaran belum mencukupi. Kekurangan ${formatCurrency(total - allocatedPaymentTotal)}.`); return; }
