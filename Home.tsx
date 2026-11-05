@@ -645,9 +645,13 @@ export const calculateSystemAccountBalances = (
   const totals = summarizeTransactionTotals(transactions, cashMovements);
   const funding = calculateCapitalSourceBalances(products);
   const nonModalFunding = nonModalCapitalFunding(products);
-  const toolDepreciation = totalToolDepreciation(products);
-  const buildingCost = totalBuildingCost(products);
+  const toolDepreciation = cashMovements
+  .filter(movement => movement.kind === "expense" && movement.accountCode === "503")
+  .reduce((sum, movement) => sum + movement.amount, 0);
 
+const buildingCost = cashMovements
+  .filter(movement => movement.kind === "expense" && movement.accountCode === "504")
+  .reduce((sum, movement) => sum + movement.amount, 0);
   return {
     "101": openingCash + totals.cash - funding.Kas,
     "102": totals.receivables - funding.Piutang,
