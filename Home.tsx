@@ -461,47 +461,7 @@ export const transactionRevenueNet = (transaction: Partial<Pick<Transaction, "su
   const revenue = transactionRevenueBreakdown(transaction);
   return revenue.serviceNet + revenue.spareNet;
 };
-
-export const summarizeTransactionTotals = (transactions: Transaction[]) =>
-  transactions.reduce((summary, transaction) => {
-    const revenue = transactionRevenueBreakdown(transaction);
-    const p = normalizeTransactionPayments(transaction);
-    const expense = transactionExpenseNet(transaction);
-
-    const isExpenseOnly =
-      revenue.serviceGross === 0 &&
-      revenue.spareGross === 0 &&
-      expense > 0;
-
-    const taxAmount = calculateTransactionAmounts(
-      transaction.subtotal || 0,
-      transaction.discount || 0,
-      transaction.tax || 0
-    ).taxAmount;
-
-    summary.serviceRevenue += revenue.serviceGross;
-    summary.spareRevenue += revenue.spareGross;
-    summary.serviceNetRevenue += revenue.serviceNet;
-    summary.spareNetRevenue += revenue.spareNet;
-    summary.hpp += transaction.hppTotal || 0;
-    summary.salesDiscount -= revenue.effectiveDiscount;
-    summary.taxPayable += taxAmount;
-    summary.expenseTotal += expense;
-
-    // Beban operasional adalah uang keluar.
-    // Penjualan tetap dihitung sebagai uang masuk.
-    const cashMovement = isExpenseOnly
-      ? -p.cash
-      : Math.max(0, p.cash - Math.max(0, transaction.change || 0));
-
-    const bankMovement = isExpenseOnly
-      ? -(p.transfer + p.qris)
-      : p.transfer + p.qris;
-
-    summary.cash +=
-      cashMovement +
-      (transaction.settlements || [])
-        .filter(x => x.method === "Cash")
+        
 export const summarizeTransactionTotals = (
   transactions: Transaction[],
   cashMovements: CashMovement[] = []
