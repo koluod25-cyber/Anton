@@ -1409,8 +1409,32 @@ warrantyCode: transaction.warrantyCode,
   }, [products, transactions, inventoryCapitalAdjustment, totals]);
     
   const accounts = useMemo(() => [...accountBase, ...customAccounts.filter(account => !accountBase.some(base => base.code === account.code))], [accountBase, customAccounts]);
-  const reportTransactions = useMemo(() => transactions.filter(transaction => transactionMatchesPeriod(transaction.date, reportPeriodFrom, reportPeriodTo)), [transactions, reportPeriodFrom, reportPeriodTo]);
-  const reportSystemBalances = useMemo(() => calculateSystemAccountBalances(products, reportTransactions, totalInventoryValue(seedProducts)), [products, reportTransactions]);
+  
+const reportTransactions = useMemo(
+  () => transactions.filter(transaction =>
+    transactionMatchesPeriod(transaction.date, reportPeriodFrom, reportPeriodTo)
+  ),
+  [transactions, reportPeriodFrom, reportPeriodTo]
+);
+
+const reportCashMovements = useMemo(
+  () => cashMovements.filter(movement =>
+    transactionMatchesPeriod(movement.date, reportPeriodFrom, reportPeriodTo)
+  ),
+  [cashMovements, reportPeriodFrom, reportPeriodTo]
+);
+
+const reportSystemBalances = useMemo(
+  () => calculateSystemAccountBalances(
+    products,
+    reportTransactions,
+    totalInventoryValue(seedProducts),
+    OPENING_CASH,
+    reportCashMovements
+  ),
+  [products, reportTransactions, reportCashMovements]
+);
+    
   const reportAccounts = useMemo(() => accounts.map(account => reportSystemBalances[account.code] === undefined ? account : { ...account, balance: reportSystemBalances[account.code] }), [accounts, reportSystemBalances]);
   const reportAssetTotal = reportAccounts.filter(account => account.type === "Aktiva").reduce((sum, account) => sum + account.balance, 0);
   const reportLiabilityTotal = reportAccounts.filter(account => account.type === "Pasiva").reduce((sum, account) => sum + account.balance, 0);
