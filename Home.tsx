@@ -589,9 +589,6 @@ export const calculateBalanceSheetTotals = (
   .filter(movement => movement.kind === "expense" && movement.accountCode === "503")
   .reduce((sum, movement) => sum + movement.amount, 0);
 
-const buildingCost = cashMovements
-  .filter(movement => movement.kind === "expense" && movement.accountCode === "504")
-  .reduce((sum, movement) => sum + movement.amount, 0);
   const funding = calculateCapitalSourceBalances(products);
   const assetTotal =
     openingCash +
@@ -603,8 +600,7 @@ const buildingCost = cashMovements
     totals.receivables -
     funding.Piutang +
     totalInventoryValue(products) -
-    toolDepreciation -
-    buildingCost;
+    toolDepreciation;
   const liabilityTotal = totals.taxPayable + totals.loanPayable + funding.Hutang;
   const reconciledInventoryCapital = calculateReconciledInventoryCapital(products, transactions, openingInventory);
   const modalTotal =
