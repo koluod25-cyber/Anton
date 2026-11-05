@@ -2201,60 +2201,26 @@ const reportSystemBalances = useMemo(
   </div>
 )}
 {cashierMode !== "sale" && (
-  <div className="app-card mt-4 overflow-hidden">
-    <div className="border-b border-slate-100 p-4">
-      <h3 className="text-sm font-extrabold">Riwayat Pemasukan & Pengeluaran</h3>
-      <p className="mt-1 text-[10px] text-slate-500">
-        Transaksi terbaru ditampilkan terlebih dahulu.
-      </p>
-    </div>
-
-    <div className="space-y-2 p-3">
-      {cashMovements.map(movement => (
-        <div
-          key={movement.id}
-          className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-3"
-        >
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-extrabold">
-              {movement.description}
-            </p>
-            <p className="mt-1 text-[10px] text-slate-500">
-              {movement.date} · {movement.method} · {movement.category}
-            </p>
-            {movement.kind === "expense" && (
-              <p className="mt-1 text-[10px] font-bold text-slate-500">
-                Akun: {accounts.find(account => account.code === movement.accountCode)?.name || movement.accountCode || "Beban Operasional"}
-              </p>
-            )}
-            <p className={`mt-1 text-xs font-extrabold ${
-              movement.kind === "expense" ? "text-red-600" : "text-emerald-600"
-            }`}>
-              {movement.kind === "expense" ? "-" : "+"}
-              {formatCurrency(movement.amount)}
-            </p>
-          </div>
-
-          {movement.kind === "expense" && (
-            <button
-              type="button"
-              onClick={() => deleteCashMovement(movement)}
-              className="btn-press flex-shrink-0 rounded-lg bg-red-50 px-3 py-2 text-[10px] font-extrabold text-red-600"
-            >
-              <Trash2 size={13} />
-              Hapus
-            </button>
-          )}
-        </div>
-      ))}
-
-      {!cashMovements.length && (
-        <p className="py-6 text-center text-xs text-slate-400">
-          Belum ada riwayat pemasukan atau pengeluaran.
+  <button
+    type="button"
+    onClick={() => navigate("cash-history")}
+    className="app-card btn-press flex w-full items-center justify-between gap-3 p-4 text-left transition hover:border-red-200"
+  >
+    <div className="flex items-center gap-3">
+      <div className="grid h-11 w-11 place-items-center rounded-xl bg-red-50 text-[#c7362f]">
+        <FileClock size={21} />
+      </div>
+      <div>
+        <p className="text-sm font-extrabold text-slate-900">
+          Riwayat Pemasukan & Pengeluaran
         </p>
-      )}
+        <p className="mt-1 text-[10px] font-semibold text-slate-500">
+          Lihat transaksi dan cetak laporan
+        </p>
+      </div>
     </div>
-  </div>
+    <ChevronRight size={19} className="text-slate-400" />
+  </button>
 )}
 <div className={cashierMode === "sale" ? "" : "hidden"}>
 <SectionHeading eyebrow="Pusat transaksi" title="Kasir POS" description="Tambahkan jasa atau sparepart, lalu selesaikan pembayaran dengan kembalian otomatis." /><div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,.75fr)]"><div className="app-card overflow-hidden"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4"><div><p className="panel-label">Katalog</p><h2 className="mt-1 font-extrabold">Produk & jasa aktif</h2></div><div className="flex gap-2"><label className="relative block"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari SKU / barcode" className="h-10 w-44 rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-semibold outline-none transition focus:border-[#c7362f] focus:bg-white sm:w-52" /></label><button onClick={() => setBarcodeOpen(true)} className="btn-press flex h-10 items-center gap-1.5 rounded-xl bg-slate-900 px-3 text-xs font-extrabold text-white"><ScanLine size={15} /> Scan</button><button onClick={addTransportExpense} className="btn-press flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-xs font-extrabold text-white"><Wallet size={15} /> Transportasi</button></div></div><div className="thin-scrollbar grid max-h-[calc(100vh-225px)] min-h-[450px] grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2">{filteredProducts.map(product => <button key={product.id} onClick={() => addToCart(product.id)} className="btn-press group rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-red-200 hover:shadow-[0_10px_25px_-18px_rgba(199,54,47,.55)]"><div className="flex items-start justify-between gap-3"><div className="flex flex-wrap gap-1.5"><span className="mono rounded-md bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-600">{product.sku}</span><span className={cn("rounded-md px-2 py-1 text-[9px] font-extrabold uppercase", product.type === "jasa" ? "bg-red-50 text-[#b62824]" : "bg-blue-50 text-blue-700")}>{product.type}</span></div><Plus className="text-slate-300 transition group-hover:text-[#c7362f]" size={17} /></div><p className="mt-3 min-h-10 text-[13px] font-extrabold leading-snug text-slate-800">{product.name}</p><div className="mt-2 flex justify-between text-[10px] font-semibold text-slate-500"><span>Stok {product.stock}</span><span>Modal {formatCurrency(product.cost)}</span></div><p className="mt-2 text-base font-extrabold tracking-[-.03em] text-slate-900">{formatCurrency(product.price)}</p><img src={barcodeSvg(product.barcode, 132, 25)} alt={`Barcode ${product.barcode}`} className="mt-3 h-[39px] w-[132px] rounded border border-slate-100" /></button>)}{!filteredProducts.length && <EmptyState label="Produk tidak ditemukan" />}</div></div>
