@@ -2074,8 +2074,10 @@ const reportSystemBalances = useMemo(
       onChange={e => setMovementAccountCode(e.target.value)}
       className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none"
     >
-      {accounts
-        .filter(account => account.type === "Beban")
+      {accounts.filter(account =>
+  account.type === "Beban" &&
+  !["502", "503", "504"].includes(account.code)
+)
         .map(account => (
           <option key={account.code} value={account.code}>
             {account.code} - {account.name}
