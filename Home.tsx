@@ -2202,16 +2202,6 @@ const reportSystemBalances = useMemo(
   Hapus
 </button></div></div></div>})}{!filteredTransactions.length&&<EmptyState label="Belum ada transaksi yang cocok"/>}</div></div></div>;
 
-  ["SKU", "Barcode", "Nama", "Harga Jual", "Modal/HPP", "Stok", "Tipe"],
-...products.map(product => [
-  product.sku,
-  product.barcode,
-  product.name,
-  product.price,
-  product.cost,
-  product.stock,
-  productTypeLabel(product.type)
-])
   const Accounts = () => (
   <div className="enter-panel">
     <SectionHeading
