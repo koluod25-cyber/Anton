@@ -1462,8 +1462,7 @@ const buildingCost = cashMovements
       { code: "103", name: "Persediaan Barang", type: "Aktiva", balance: inventory },
       { code: "104", name: "Bank / QRIS", type: "Aktiva", balance: bank - funding.Bank - funding.QRIS },
       { code: "105", name: "Akumulasi Penyusutan Alat", type: "Aktiva", balance: -toolDepreciation },
-      { code: "106", name: "Biaya Gedung", type: "Aktiva", balance: -buildingCost },
-
+      { code: "106", name: "Akumulasi Penyusutan Gedung", type: "Aktiva", balance: -buildingCost },
       { code: "201", name: "Hutang Usaha", type: "Pasiva", balance: funding.Hutang },
       { code: "202", name: "Hutang Bank", type: "Pasiva", balance: 0 },
       { code: "203", name: "Hutang Pajak", type: "Pasiva", balance: taxPayable },
