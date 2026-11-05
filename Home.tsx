@@ -1600,7 +1600,7 @@ const reportSystemBalances = useMemo(
       description: movementDescription.trim(),
       amount,
       method: movementMethod,
-    };
+      accountCode: movementKind === "expense" ? movementAccountCode : undefined,
 
     setCashMovements(previous => [movement, ...previous]);
     setMovementDescription("");
