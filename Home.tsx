@@ -62,6 +62,7 @@ type TransactionItem = {
   price: number;
   cost: number;
   type: ProductType;
+  imeiSerials?: string[];
 };
 
 type Transaction = {
@@ -129,6 +130,7 @@ type CartItem = {
   productId: string;
   qty: number;
   price: number;
+  imeiSerials?: string[];
 };
 
 type FailedScanKind = "not-found" | "out-of-stock";
