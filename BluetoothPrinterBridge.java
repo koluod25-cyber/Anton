@@ -81,7 +81,6 @@ public class BluetoothPrinterBridge extends Plugin {
     }
 
     @PluginMethod
-    @PluginMethod
 public void print(PluginCall call) {
     String connection = call.getString("connection", "Bluetooth");
     String content = call.getString("content", "");
