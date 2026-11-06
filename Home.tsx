@@ -873,6 +873,10 @@ export default function Home() {
   const [activePage, setActivePage] = useState("dashboard");
   const [warrantyQuery, setWarrantyQuery] = useState("");
   const [warrantyScannerOpen, setWarrantyScannerOpen] = useState(false);
+  const [warrantyResult, setWarrantyResult] = useState<{
+    transaction: Transaction;
+    item: TransactionItem;
+  } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>(() => readStored("anton_products_v22", seedProducts));
   const [inventoryCapitalAdjustment, setInventoryCapitalAdjustment] = useState<number>(() => readStored("anton_inventory_capital_adjustment_v22", 0));
