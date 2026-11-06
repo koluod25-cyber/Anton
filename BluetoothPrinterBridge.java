@@ -218,6 +218,17 @@ public void print(PluginCall call) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             out.write(new byte[]{0x1B, 0x40});
+
+int[] densityValues = {250, 252, 0, 2, 4, 6};
+int densityCommand = densityValues[
+    Math.max(0, Math.min(5, printDensity))
+];
+
+out.write(new byte[]{
+    0x1D, 0x28, 0x4B,
+    0x02, 0x00, 0x31,
+    (byte) densityCommand
+});
             if (logoBase64 != null && !logoBase64.trim().isEmpty()) {
                 byte[] logo = buildLogoRaster(logoBase64, paperWidth);
                 if (logo.length > 0) { out.write(new byte[]{0x1B, 0x61, 0x01}); out.write(logo); out.write('\n'); }
