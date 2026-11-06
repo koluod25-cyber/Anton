@@ -143,7 +143,6 @@ export function removeCustomAccount(previous: Account[], code: string) {
 }
 type PrinterSettings = {
   size: "58mm" | "80mm" | "A4";
-
   connection: "Bluetooth" | "WiFi" | "USB" | "System";
 
   bluetoothName: string;
@@ -154,6 +153,7 @@ type PrinterSettings = {
 
   copies: number;
   colorMode: "BW" | "Color";
+  printDensity: number;
 
   headerText: string;
   footerText: string;
@@ -192,7 +192,6 @@ const seedProducts: Product[] = [
 
 const defaultPrinter: PrinterSettings = {
   size: "58mm",
-
   connection: "Bluetooth",
 
   bluetoothName: "POS-58B",
@@ -203,6 +202,7 @@ const defaultPrinter: PrinterSettings = {
 
   copies: 1,
   colorMode: "BW",
+  printDensity: 2,
 
   headerText: "Terima kasih atas kepercayaan Anda",
   footerText: "Barang yang sudah dibeli tidak dapat dikembalikan",
@@ -213,6 +213,7 @@ const defaultPrinter: PrinterSettings = {
   phone: "TLP. 0812-818-98808",
   showLogo: true,
 };
+
 const formatCurrency = (value: number) => `Rp ${Math.round(value).toLocaleString("id-ID")}`;
 export const dayKey = (date: Date) => date.toDateString();
 export const formatTransactionDate = (date: string | number | Date) => new Date(date).toLocaleString("id-ID");
