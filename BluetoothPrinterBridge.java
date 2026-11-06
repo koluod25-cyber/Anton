@@ -207,11 +207,12 @@ public void print(PluginCall call) {
         catch (Exception e) { call.reject("Wi-Fi printer tidak dapat terhubung: " + safeMessage(e)); }
     }
 
-        private byte[] buildEscPos(
-        String content,
-        String paperWidth,
-        String logoBase64,
-        String warrantyCode
+    private byte[] buildEscPos(
+    String content,
+    String paperWidth,
+    int printDensity,
+    String logoBase64,
+    String warrantyCode
 ) {
         int maxChars = "80mm".equalsIgnoreCase(paperWidth) ? 48 : "A4".equalsIgnoreCase(paperWidth) ? 80 : 32;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
