@@ -127,13 +127,15 @@ public void print(PluginCall call) {
 }
 
         private void printBluetooth(
-        String address,
-        String content,
-        int copies,
-        String paperWidth,
-        String logoBase64,
-        String warrantyCode
-      ) throws Exception {
+    String address,
+    String content,
+    int copies,
+    String paperWidth,
+    int printDensity,
+    String logoBase64,
+    String warrantyCode
+) throws Exception {
+            
         if (!hasBluetoothConnectPermission()) throw new Exception("Izin BLUETOOTH_CONNECT belum diberikan.");
         if (address == null || address.trim().isEmpty()) throw new Exception("Alamat Bluetooth printer belum dipilih.");
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
