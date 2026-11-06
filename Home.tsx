@@ -2977,7 +2977,99 @@ logoBase64,
   const StockOpname = () => <div className="enter-panel"><SectionHeading eyebrow="Inventori" title="Stok opname" description="Bandingkan stok sistem dengan jumlah fisik, lalu simpan untuk memperbarui persediaan dan Neraca." action={<div className="flex gap-2"><button onClick={() => downloadCsv([["Produk", "SKU", "Sistem", "Fisik", "Selisih"], ...products.filter(product => product.type === "spare").map(product => [product.name, product.sku, product.stock, stockCount[product.id] ?? "", stockCount[product.id] === undefined || stockCount[product.id] === "" ? "-" : Number(stockCount[product.id]) - product.stock])], "opname.csv")} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"><Download size={14} />Export CSV</button><button onClick={() => saveOpname(false)} className="btn-press inline-flex items-center gap-2 rounded-xl bg-[#c7362f] px-3 py-2.5 text-xs font-extrabold text-white"><Check size={14} />Simpan</button></div>} /><div className="app-card overflow-hidden"><div className="grid grid-cols-[minmax(0,1fr)_62px_62px_58px] gap-2 bg-slate-950 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[.1em] text-slate-300"><span>Produk</span><span className="text-center">Sistem</span><span className="text-center">Fisik</span><span className="text-center">Selisih</span></div>{products.filter(product => product.type === "spare").map(product => { const input = stockCount[product.id] ?? ""; const diff = input === "" ? null : Number(input) - product.stock; return <div className="grid grid-cols-[minmax(0,1fr)_62px_62px_58px] items-center gap-2 border-b border-slate-100 px-4 py-3.5" key={product.id}><div className="min-w-0"><p className="truncate text-xs font-extrabold">{product.name}</p><p className="mono mt-1 text-[10px] font-bold text-slate-400">{product.sku}</p></div><span className="mx-auto grid h-8 w-12 place-items-center rounded-lg bg-slate-100 text-xs font-extrabold">{product.stock}</span><input type="number" value={input} onChange={event => setStockCount(previous => ({ ...previous, [product.id]: event.target.value }))} placeholder="0" className="h-8 w-12 rounded-lg border border-slate-200 text-center text-xs font-extrabold outline-none focus:border-[#c7362f]" /><span className={cn("text-center text-xs font-extrabold", diff === null ? "text-slate-400" : diff > 0 ? "text-emerald-600" : diff < 0 ? "text-red-600" : "text-slate-500")}>{diff ?? "—"}</span></div>; })}<div className="flex flex-wrap gap-2 p-4"><button onClick={() => saveOpname(true)} className="btn-press rounded-xl bg-[#c7362f] px-4 py-3 text-xs font-extrabold text-white">Simpan permanen & buka Neraca</button><button onClick={() => { setStockCount({}); localStorage.removeItem("anton_opname_v22"); toast.success("Input opname direset."); }} className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-xs font-extrabold text-slate-700"><RotateCcw size={14} />Reset input</button></div></div></div>;
 
   const FailedScanHistory = () => <div className="enter-panel space-y-5"><SectionHeading eyebrow="Operasional kasir" title="Riwayat Scan Gagal" description="Lihat barcode atau SKU yang tidak ditemukan dan barang yang stoknya kosong. Riwayat tersimpan di perangkat ini agar tetap tersedia saat offline." action={failedScans.length ? <button onClick={() => { if (window.confirm("Hapus seluruh riwayat scan gagal?")) { setFailedScans([]); toast.success("Riwayat scan gagal dihapus."); } }} className="btn-press inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-extrabold text-slate-700"><Trash2 size={14} />Hapus semua</button> : undefined} /><div className="grid grid-cols-2 gap-3 sm:grid-cols-3"><MetricCard label="TOTAL KEJADIAN" value={String(failedScans.reduce((sum, item) => sum + item.count, 0))} caption="Semua percobaan gagal" accent="red" /><MetricCard label="BARCODE TIDAK DITEMUKAN" value={String(failedScans.filter(item => item.kind === "not-found").reduce((sum, item) => sum + item.count, 0))} caption="Perlu ditambahkan ke master" accent="charcoal" /><MetricCard label="STOK KOSONG" value={String(failedScans.filter(item => item.kind === "out-of-stock").reduce((sum, item) => sum + item.count, 0))} caption="Perlu restock" accent="blue" /></div><div className="app-card overflow-hidden"><div className="grid grid-cols-[minmax(0,1fr)_110px_86px_42px] gap-2 bg-slate-950 px-4 py-3 text-[10px] font-extrabold uppercase tracking-[.1em] text-slate-300"><span>Barcode / SKU</span><span>Masalah</span><span className="text-right">Terakhir</span><span /></div>{failedScans.length ? <div>{failedScans.map(item => <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_110px_86px_42px] items-center gap-2 border-b border-slate-100 px-4 py-3.5 last:border-0"><div className="min-w-0"><p className="mono truncate text-xs font-extrabold text-slate-900">{item.value}</p><p className="mt-1 truncate text-[10px] font-semibold text-slate-500">{item.productName || "Produk tidak terdaftar"} · {item.count}×</p></div><span className={cn("rounded-full px-2 py-1 text-center text-[9px] font-extrabold", item.kind === "not-found" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700")}>{item.kind === "not-found" ? "Tidak ditemukan" : "Stok kosong"}</span><span className="text-right text-[9px] font-semibold leading-tight text-slate-500">{new Date(item.timestamp).toLocaleString("id-ID", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span><div className="flex items-center justify-end gap-1">{item.kind === "not-found" && <button onClick={() => { setProductBarcodeDraft(item.value); setProductSkuDraft(item.value); setProductSkuInput(item.value); setProductEditor("new"); navigate("produk"); toast.info(`Kode ${item.value} siap didaftarkan sebagai barang baru.`); }} aria-label={`Tambah barang ${item.value}`} className="btn-press rounded-lg bg-blue-50 px-2 py-1.5 text-[9px] font-extrabold text-blue-700 hover:bg-blue-100">Tambah Barang</button>}<button onClick={() => { setFailedScans(previous => previous.filter(entry => entry.id !== item.id)); toast.success("Riwayat scan dihapus."); }} aria-label={`Hapus riwayat ${item.value}`} className="btn-press rounded-lg bg-slate-100 p-2 text-slate-500 hover:bg-red-50 hover:text-red-700"><Trash2 size={14} /></button></div></div>)}</div> : <div className="grid min-h-56 place-items-center p-6 text-center"><div><CircleCheck className="mx-auto text-emerald-500" size={28} /><p className="mt-2 text-sm font-extrabold">Belum ada scan gagal</p><p className="mt-1 text-xs font-semibold text-slate-500">Riwayat akan muncul otomatis setelah barcode bermasalah dipindai dari Kasir POS.</p></div></div>}</div></div>;
+    const WarrantyCheck = () => (
+    <div className="enter-panel space-y-5">
+      <SectionHeading
+        eyebrow="Layanan pelanggan"
+        title="Pengecekan Garansi"
+        description="Periksa pembelian menggunakan IMEI/Serial atau barcode garansi pada struk."
+      />
 
+      <div className="app-card space-y-4 p-5">
+        <div>
+          <label className="text-xs font-extrabold text-slate-700">
+            Nomor IMEI / Serial / Barcode Garansi
+          </label>
+          <input
+            value={warrantyQuery}
+            onChange={event => {
+              setWarrantyQuery(event.target.value);
+              setWarrantyResult(null);
+            }}
+            onKeyDown={event => {
+              if (event.key === "Enter") checkWarranty();
+            }}
+            placeholder="Scan atau masukkan nomor secara manual"
+            className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-bold outline-none focus:border-red-500"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setWarrantyScannerOpen(true)}
+            className="btn-press inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-xs font-extrabold text-white"
+          >
+            <ScanLine size={16} />
+            Scan Barcode
+          </button>
+          <button
+            onClick={() => checkWarranty()}
+            className="btn-press rounded-xl bg-[#c7362f] py-3 text-xs font-extrabold text-white"
+          >
+            Periksa Garansi
+          </button>
+        </div>
+      </div>
+
+      {warrantyResult ? (
+        <div className="app-card space-y-4 p-5">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-sm font-extrabold text-emerald-800">
+              Data pembelian ditemukan
+            </p>
+            <p className="mt-1 text-xs text-emerald-700">
+              Data transaksi cocok dengan nomor yang diperiksa.
+            </p>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <div className="flex justify-between gap-3">
+              <span className="text-slate-500">Nomor nota</span>
+              <strong>{warrantyResult.transaction.noNota}</strong>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-slate-500">Tanggal pembelian</span>
+              <strong>
+                {new Date(warrantyResult.transaction.date).toLocaleDateString("id-ID")}
+              </strong>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-slate-500">Pelanggan</span>
+              <strong>{warrantyResult.transaction.customer}</strong>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-slate-500">Produk</span>
+              <strong className="text-right">{warrantyResult.item.name}</strong>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-slate-500">IMEI / Serial</span>
+              <strong className="text-right">
+                {warrantyResult.item.imeiSerials?.join(", ") || "Tidak tercatat"}
+              </strong>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-slate-500">Barcode garansi</span>
+              <strong>{warrantyResult.transaction.warrantyCode}</strong>
+            </div>
+          </div>
+
+          <p className="rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+            Masa berlaku garansi belum dapat ditentukan karena aturan durasi garansi belum dikonfigurasi.
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
   const Setting = () => <div className="enter-panel"><SectionHeading eyebrow="Konfigurasi" title="Printer & identitas struk" description="Atur logo, ukuran media, serta teks pada struk pelanggan." /><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]"><div className="space-y-5"><div className="app-card p-5"><div className="flex items-center gap-4"><div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-slate-50 p-2"><img src={logo} alt="Logo toko" className="h-full w-full object-contain" /></div><div><p className="text-sm font-extrabold">Logo toko</p><p className="mt-1 text-xs text-slate-500">JPG/PNG maksimum 1MB. Akan tampil pada struk jika diaktifkan.</p></div></div><input ref={logoInput} type="file" accept="image/*" className="hidden" onChange={uploadLogo} /><div className="mt-4 flex gap-2"><button onClick={() => logoInput.current?.click()} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-3 py-2.5 text-xs font-extrabold text-white"><Upload size={14} />Input logo</button><button onClick={() => setLogo(MARK_URL)} className="btn-press rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-extrabold text-slate-700">Reset default</button></div>
   </div>
     <div className="app-card p-5">
