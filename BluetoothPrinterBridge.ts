@@ -24,11 +24,12 @@ export type BluetoothPrinterBridgePlugin = {
     deviceId?: number;
     vendorId?: number;
     productId?: number;
-    copies?: number;
+        copies?: number;
     paperWidth?: "58mm" | "80mm" | "A4";
+    printDensity?: number;
     content: string;
     logoBase64?: string;
-warrantyCode?: string;
+    warrantyCode?: string;
   }): Promise<{ success: boolean }>;
 };
 
