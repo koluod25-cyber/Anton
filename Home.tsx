@@ -1617,7 +1617,54 @@ const reportSystemBalances = useMemo(
   const dashboardRevenue = netRevenueTotal;
 
   const navigate = (page: string) => { setActivePage(page); setSidebarOpen(false); setMobileMenu(false); };
-  const recordFailedScan = (value: string, kind: FailedScanKind, productName?: string) => { const normalized = value.trim() || "(kosong)"; setFailedScans(previous => upsertFailedScanRecord(previous, { value: normalized, kind, productName })); };
+
+const recordFailedScan = (value: string, kind: FailedScanKind, productName?: string) => {
+  const normalized = value.trim() || "(kosong)";
+  setFailedScans(previous => upsertFailedScanRecord(previous, { value: normalized, kind, productName }));
+};
+
+const checkWarranty = (rawValue: string = warrantyQuery) => {
+  const queryValue = rawValue.trim().toLowerCase();
+
+  if (!queryValue) {
+    toast.error("Masukkan IMEI/Serial atau scan barcode garansi.");
+    setWarrantyResult(null);
+    return;
+  }
+
+  for (const transaction of transactions) {
+    if (transaction.deletedAt) continue;
+
+    const warrantyCodeMatch =
+      transaction.warrantyCode?.trim().toLowerCase() === queryValue;
+
+    const matchedItem = transaction.items.find(item =>
+      item.imeiSerials?.some(serial =>
+        serial.trim().toLowerCase() === queryValue
+      )
+    );
+
+    if (warrantyCodeMatch || matchedItem) {
+      const selectedItem =
+        matchedItem ||
+        transaction.items.find(item => item.type === "spare") ||
+        transaction.items[0];
+
+      if (!selectedItem) continue;
+
+      setWarrantyResult({
+        transaction,
+        item: selectedItem,
+      });
+
+      toast.success("Data pembelian ditemukan.");
+      return;
+    }
+  }
+
+  setWarrantyResult(null);
+  toast.error("Data garansi atau IMEI/Serial tidak ditemukan.");
+};
   const installApp = async () => {
     if (isInstalled) {
       toast.info("Anton Service POS sudah terpasang di perangkat ini.");
