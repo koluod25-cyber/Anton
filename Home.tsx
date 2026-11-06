@@ -3094,47 +3094,67 @@ const reportSystemBalances = useMemo(
   )}
 
   <div className="mt-4 grid grid-cols-2 gap-3">
-    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
-      Jumlah cetak
-      <input
-        type="number"
-        min="1"
-        max="20"
-        value={printer.copies}
-        onChange={(event) =>
-          setPrinter((previous) => ({
-            ...previous,
-            copies: Math.max(
-              1,
-              Math.min(
-                20,
-                Number(event.target.value) || 1
-              )
-            ),
-          }))
-        }
-        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
-      />
-    </label>
+  <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+    Jumlah cetak
+    <input
+      type="number"
+      min="1"
+      max="20"
+      value={printer.copies}
+      onChange={(event) =>
+        setPrinter((previous) => ({
+          ...previous,
+          copies: Math.max(
+            1,
+            Math.min(20, Number(event.target.value) || 1)
+          ),
+        }))
+      }
+      className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
+    />
+  </label>
 
-    <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
-      Mode cetak
-      <select
-        value={printer.colorMode}
-        onChange={(event) =>
-          setPrinter((previous) => ({
-            ...previous,
-            colorMode:
-              event.target.value as PrinterSettings["colorMode"],
-          }))
-        }
-        className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
-      >
-        <option value="BW">Hitam / Putih</option>
-        <option value="Color">Warna</option>
-      </select>
-    </label>
-  </div>
+  <label className="grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+    Mode cetak
+    <select
+      value={printer.colorMode}
+      onChange={(event) =>
+        setPrinter((previous) => ({
+          ...previous,
+          colorMode: event.target.value as PrinterSettings["colorMode"],
+        }))
+      }
+      className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
+    >
+      <option value="BW">Hitam / Putih</option>
+      <option value="Color">Warna</option>
+    </select>
+  </label>
+
+  <label className="col-span-2 grid gap-1.5 text-[11px] font-extrabold text-slate-600">
+    Ketebalan hasil cetak
+    <select
+      value={printer.printDensity}
+      onChange={(event) =>
+        setPrinter((previous) => ({
+          ...previous,
+          printDensity: Number(event.target.value),
+        }))
+      }
+      className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold outline-none focus:border-[#c7362f] focus:bg-white"
+    >
+      <option value={0}>Sangat tipis</option>
+      <option value={1}>Tipis</option>
+      <option value={2}>Normal</option>
+      <option value={3}>Agak tebal</option>
+      <option value={4}>Tebal</option>
+      <option value={5}>Sangat tebal</option>
+    </select>
+    <span className="text-[10px] font-medium text-slate-500">
+      Pengaturan ini berlaku untuk printer Bluetooth, Wi-Fi, dan USB.
+    </span>
+  </label>
+</div>
 </div>
     <div className="app-card p-5"><p className="panel-label">Ukuran kertas</p><div className="mt-3 grid grid-cols-3 gap-2">{([{ id: "58mm", label: "58 mm", sub: "Kecil", color: "border-amber-300 bg-amber-50 text-amber-800" }, { id: "80mm", label: "80 mm", sub: "Besar", color: "border-emerald-300 bg-emerald-50 text-emerald-800" }, { id: "A4", label: "A4", sub: "HVS", color: "border-blue-300 bg-blue-50 text-blue-800" }] as const).map(size => <button onClick={() => setPrinter(previous => ({ ...previous, size: size.id }))} key={size.id} className={cn("btn-press rounded-xl border-2 p-3 text-left", printer.size === size.id ? "border-slate-900 bg-slate-900 text-white shadow-lg" : size.color)}><p className="text-xs font-extrabold">{size.label}</p><p className="mt-1 text-[10px] font-semibold opacity-70">{size.sub}</p></button>)}</div><div className="mt-5 grid gap-3 sm:grid-cols-2"><SettingsField
   label="Header text"
