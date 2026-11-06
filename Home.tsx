@@ -2375,10 +2375,10 @@ const reportSystemBalances = useMemo(
           productId: printer.connection === "USB"
             ? selectedUsbPrinter?.productId : undefined,
           copies: Math.max(1, Math.min(20, printer.copies || 1)),
-          paperWidth: printer.size,
-          content,
-          logoBase64,
-        });
+paperWidth: printer.size,
+printDensity: printer.printDensity,
+content,
+logoBase64,
 
         if (result.success) {
           toast.success("Riwayat kas berhasil dikirim ke printer.");
