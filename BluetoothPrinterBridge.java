@@ -188,11 +188,12 @@ public void print(PluginCall call) {
         if (host == null || host.trim().isEmpty()) throw new Exception("IP printer Wi-Fi belum diisi.");
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host.trim(), port), 5000);
-            OutputStream output = socket.getOutputStream(); byte[] data = buildEscPos(
-            content,
-            paperWidth,
-            logoBase64,
-            warrantyCode
+            byte[] data = buildEscPos(
+    content,
+    paperWidth,
+    printDensity,
+    logoBase64,
+    warrantyCode
 );
             for (int i = 0; i < copies; i++) { output.write(data); output.flush(); Thread.sleep(300); }
         }
