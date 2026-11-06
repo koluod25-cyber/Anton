@@ -3475,7 +3475,16 @@ logoBase64,
 </div>
     <Modal open={barcodeOpen} onClose={() => setBarcodeOpen(false)}><p className="panel-label">Scan produk</p><h2 className="mt-1 text-lg font-extrabold">Scan barcode</h2><div className="mt-4 grid h-36 place-items-center rounded-2xl bg-slate-950 text-center text-xs font-semibold text-slate-400"><ScanLine size={24} className="mb-1" /><span>Gunakan kamera HP untuk membaca barcode.<br />Jika kamera tidak tersedia, masukkan kode manual.</span></div><button onClick={() => setScannerOpen(true)} className="btn-press mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#c7362f] py-3 text-xs font-extrabold text-white"><ScanLine size={15} />Buka kamera HP</button><input autoFocus value={barcodeInput} onChange={event => setBarcodeInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter") handleBarcode(); }} placeholder="Contoh: 880101 atau SPR-001" className="mt-4 h-11 w-full rounded-xl bg-slate-100 px-3 text-sm font-bold outline-none focus:ring-2 focus:ring-red-100" /><div className="mt-3 grid grid-cols-2 gap-2"><button onClick={handleBarcode} className="btn-press rounded-xl bg-blue-700 py-3 text-xs font-extrabold text-white">Pakai</button><button onClick={() => setBarcodeOpen(false)} className="btn-press rounded-xl bg-slate-100 py-3 text-xs font-extrabold">Batal</button></div></Modal>
     <BarcodeScannerModal open={scannerOpen} onClose={() => setScannerOpen(false)} onDetected={handleBarcodeValue} />
-    <Modal
+    <BarcodeScannerModal
+      open={warrantyScannerOpen}
+      onClose={() => setWarrantyScannerOpen(false)}
+      onDetected={value => {
+        setWarrantyQuery(value);
+        setWarrantyScannerOpen(false);
+        checkWarranty(value);
+      }}
+    />
+   <Modal
   open={productEditor !== null}
   onClose={() => setProductEditor(null)}
 >
