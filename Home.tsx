@@ -2379,6 +2379,7 @@ paperWidth: printer.size,
 printDensity: printer.printDensity,
 content,
 logoBase64,
+});
 
         if (result.success) {
           toast.success("Riwayat kas berhasil dikirim ke printer.");
