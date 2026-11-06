@@ -175,14 +175,16 @@ public void print(PluginCall call) {
     }
 
         private void printWifi(
-        String host,
-        int port,
-        String content,
-        int copies,
-        String paperWidth,
-        String logoBase64,
-        String warrantyCode
-      ) throws Exception {
+    String host,
+    int port,
+    String content,
+    int copies,
+    String paperWidth,
+    int printDensity,
+    String logoBase64,
+    String warrantyCode
+) throws Exception {
+            
         if (host == null || host.trim().isEmpty()) throw new Exception("IP printer Wi-Fi belum diisi.");
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host.trim(), port), 5000);
