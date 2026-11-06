@@ -1295,8 +1295,8 @@ export default function Home() {
           )
         ),
 
-        paperWidth:
-  printer.size,
+        paperWidth: printer.size,
+printDensity: printer.printDensity,
 
 content,
 logoBase64,
