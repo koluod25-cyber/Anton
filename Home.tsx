@@ -1696,14 +1696,131 @@ const reportSystemBalances = useMemo(
     );
     toast.success("Transaksi pengeluaran berhasil dihapus.");
   };   
-  const completeTransaction = (openReceipt: boolean) => {
-    if (!cart.length) { toast.error("Keranjang masih kosong."); return; }
-    if (hasPaymentShortfall) { toast.error(`Pembayaran belum mencukupi. Kekurangan ${formatCurrency(total - allocatedPaymentTotal)}.`); return; }
-  const now = new Date(); const active = [paymentBreakdown.cash, paymentBreakdown.transfer, paymentBreakdown.qris, paymentBreakdown.piutang].filter(v => v > 0).length;
-  const method: PaymentMethod = active > 1 ? "Split" : paymentBreakdown.piutang > 0 ? "Piutang" : paymentBreakdown.cash > 0 ? "Cash" : paymentBreakdown.transfer > 0 ? "Transfer" : "QRIS";
-  const transaction: Transaction = { noNota: `AS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${String(transactions.length+1).padStart(3,"0")}`, date: transactionDateToIso(transactionDate, now), customer: customer.trim() || "Umum", address, phone, items: cart.map(item => { const product=products.find(entry=>entry.id===item.productId)!; return {productId:product.id,name:product.name,qty:item.qty,price:product.price,cost:product.type==="jasa"?0:product.cost,type:product.type}; }), subtotal, discount: discountAmount, tax, total, jasaTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="jasa"?p.price*item.qty:0)},0), spareTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="spare"?p.price*item.qty:0)},0), hppTotal: cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.productId);return sum+(p?.type==="spare"?p.cost*item.qty:0)},0), paymentMethod:method, paid:nonReceivablePaid, change, payments:paymentBreakdown, settlements:[], warrantyCode:`WR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*90+10)}` };
-    setProducts(previous => previous.map(product => { const item=cart.find(entry=>entry.productId===product.id); return item&&product.type==="spare"?{...product,stock:Math.max(0,product.stock-item.qty)}:product; }));
-    setTransactions(previous=>[transaction,...previous]); setCart([]); setDiscountPercent(0); setTransportasiAmount(0); setTax(0); setPaid(0); setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0}); setPaymentMethod("Cash"); setCustomer("Umum"); setTransactionDate(localDateInputValue()); setAddress(""); setPhone(""); toast.success(`Transaksi ${transaction.noNota} disimpan.`); if(openReceipt) setReceipt(transaction);
+    const completeTransaction = (openReceipt: boolean) => {
+    if (!cart.length) {
+      toast.error("Keranjang masih kosong.");
+      return;
+    }
+
+    if (hasPaymentShortfall) {
+      toast.error(`Pembayaran belum mencukupi. Kekurangan ${formatCurrency(total - allocatedPaymentTotal)}.`);
+      return;
+    }
+
+    const serialsByProduct: Record<string, string[]> = {};
+    const usedSerials = new Set(
+      transactions.flatMap(transaction =>
+        transaction.items.flatMap(item =>
+          (item.imeiSerials ?? []).map(serial => serial.trim().toLowerCase())
+        )
+      )
+    );
+
+    for (const cartItem of cart) {
+      const product = products.find(entry => entry.id === cartItem.productId);
+      if (!product || product.type !== "spare") continue;
+
+      const serials: string[] = [];
+
+      for (let i = 0; i < cartItem.qty; i++) {
+        const serial = window.prompt(
+          `IMEI / Serial ${i + 1} dari ${cartItem.qty}\nBarang: ${product.name}\n\nPindai barcode atau masukkan nomor secara manual:`
+        );
+
+        if (serial === null) {
+          toast.info("Transaksi dibatalkan.");
+          return;
+        }
+
+        const cleaned = serial.trim();
+
+        if (!cleaned) {
+          toast.error("IMEI / Serial tidak boleh kosong.");
+          return;
+        }
+
+        const normalized = cleaned.toLowerCase();
+
+        if (usedSerials.has(normalized) || serials.some(value => value.toLowerCase() === normalized)) {
+          toast.error(`IMEI / Serial ${cleaned} sudah pernah digunakan.`);
+          return;
+        }
+
+        serials.push(cleaned);
+      }
+
+      serialsByProduct[cartItem.productId] = serials;
+    }
+
+    const now = new Date();
+    const active = [paymentBreakdown.cash, paymentBreakdown.transfer, paymentBreakdown.qris, paymentBreakdown.piutang].filter(v => v > 0).length;
+    const method: PaymentMethod = active > 1 ? "Split" : paymentBreakdown.piutang > 0 ? "Piutang" : paymentBreakdown.cash > 0 ? "Cash" : paymentBreakdown.transfer > 0 ? "Transfer" : "QRIS";
+
+    const transaction: Transaction = {
+      noNota: `AS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${String(transactions.length+1).padStart(3,"0")}`,
+      date: transactionDateToIso(transactionDate, now),
+      customer: customer.trim() || "Umum",
+      address,
+      phone,
+      items: cart.map(item => {
+        const product = products.find(entry => entry.id === item.productId)!;
+        return {
+          productId: product.id,
+          name: product.name,
+          qty: item.qty,
+          price: product.price,
+          cost: product.type === "jasa" ? 0 : product.cost,
+          type: product.type,
+          imeiSerials: serialsByProduct[item.productId] ?? []
+        };
+      }),
+      subtotal,
+      discount: discountAmount,
+      tax,
+      total,
+      jasaTotal: cart.reduce((sum,item) => {
+        const p = products.find(x => x.id === item.productId);
+        return sum + (p?.type === "jasa" ? p.price * item.qty : 0);
+      },0),
+      spareTotal: cart.reduce((sum,item) => {
+        const p = products.find(x => x.id === item.productId);
+        return sum + (p?.type === "spare" ? p.price * item.qty : 0);
+      },0),
+      hppTotal: cart.reduce((sum,item) => {
+        const p = products.find(x => x.id === item.productId);
+        return sum + (p?.type === "spare" ? p.cost * item.qty : 0);
+      },0),
+      paymentMethod: method,
+      paid: nonReceivablePaid,
+      change,
+      payments: paymentBreakdown,
+      settlements: [],
+      warrantyCode: `WR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*90+10)}`
+    };
+
+    setProducts(previous =>
+      previous.map(product => {
+        const item = cart.find(entry => entry.productId === product.id);
+        return item && product.type === "spare"
+          ? { ...product, stock: Math.max(0, product.stock - item.qty) }
+          : product;
+      })
+    );
+
+    setTransactions(previous => [transaction, ...previous]);
+    setCart([]);
+    setDiscountPercent(0);
+    setTransportasiAmount(0);
+    setTax(0);
+    setPaid(0);
+    setPaymentAmounts({cash:0,transfer:0,qris:0,piutang:0});
+    setPaymentMethod("Cash");
+    setCustomer("Umum");
+    setTransactionDate(localDateInputValue());
+    setAddress("");
+    setPhone("");
+    toast.success(`Transaksi ${transaction.noNota} disimpan.`);
+    if (openReceipt) setReceipt(transaction);
   };
   const settleReceivable = (transaction: Transaction) => {
   const outstanding = transactionReceivableOutstanding(transaction);
