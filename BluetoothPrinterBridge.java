@@ -145,13 +145,14 @@ public void print(PluginCall call) {
         BluetoothDevice device = adapter.getRemoteDevice(address.trim());
         BluetoothSocket socket = null;
         try {
-            socket = connectBluetoothSocket(device);
-            OutputStream output = socket.getOutputStream();
-            byte[] data = buildEscPos(
-            content,
-            paperWidth,
-            logoBase64,
-            warrantyCode
+    socket = connectBluetoothSocket(device);
+    OutputStream output = socket.getOutputStream();
+    byte[] data = buildEscPos(
+    content,
+    paperWidth,
+    printDensity,
+    logoBase64,
+    warrantyCode
 );
             for (int i = 0; i < copies; i++) { output.write(data); output.flush(); Thread.sleep(700); }
             Thread.sleep(300);
