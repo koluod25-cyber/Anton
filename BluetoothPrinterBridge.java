@@ -81,37 +81,50 @@ public class BluetoothPrinterBridge extends Plugin {
     }
 
     @PluginMethod
-    public void print(PluginCall call) {
-        String connection = call.getString("connection", "Bluetooth");
-        String content = call.getString("content", "");
-        String logoBase64 = call.getString("logoBase64", null);
-        String warrantyCode = call.getString("warrantyCode", "");
-        int copies = Math.max(1, Math.min(20, call.getInt("copies", 1)));
-        String paperWidth = call.getString("paperWidth", "58mm");
-        try {
-            if ("WiFi".equalsIgnoreCase(connection)) {
+    @PluginMethod
+public void print(PluginCall call) {
+    String connection = call.getString("connection", "Bluetooth");
+    String content = call.getString("content", "");
+    String logoBase64 = call.getString("logoBase64", null);
+    String warrantyCode = call.getString("warrantyCode", "");
+    int copies = Math.max(1, Math.min(20, call.getInt("copies", 1)));
+    int printDensity = Math.max(0, Math.min(5, call.getInt("printDensity", 2)));
+    String paperWidth = call.getString("paperWidth", "58mm");
+
+    try {
+        if ("WiFi".equalsIgnoreCase(connection)) {
             printWifi(
-            call.getString("host"),
-            call.getInt("port", 9100),
-            content,
-            copies,
-            paperWidth,
-            logoBase64,
-            warrantyCode
-    );
-            }
-            else if ("USB".equalsIgnoreCase(connection)) { call.reject("Pencetakan USB belum melalui bridge Bluetooth ini."); return; }
-            else printBluetooth(
-            call.getString("address"),
-            content,
-            copies,
-            paperWidth,
-            logoBase64,
-            warrantyCode
-);
-          JSObject result = new JSObject(); result.put("success", true); call.resolve(result);
-        } catch (Exception e) { call.reject("Cetak gagal: " + safeMessage(e)); }
+                call.getString("host"),
+                call.getInt("port", 9100),
+                content,
+                copies,
+                paperWidth,
+                printDensity,
+                logoBase64,
+                warrantyCode
+            );
+        } else if ("USB".equalsIgnoreCase(connection)) {
+            call.reject("Pencetakan USB belum melalui bridge Bluetooth ini.");
+            return;
+        } else {
+            printBluetooth(
+                call.getString("address"),
+                content,
+                copies,
+                paperWidth,
+                printDensity,
+                logoBase64,
+                warrantyCode
+            );
+        }
+
+        JSObject result = new JSObject();
+        result.put("success", true);
+        call.resolve(result);
+    } catch (Exception e) {
+        call.reject("Cetak gagal: " + safeMessage(e));
     }
+}
 
         private void printBluetooth(
         String address,
