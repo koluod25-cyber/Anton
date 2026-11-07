@@ -63,6 +63,7 @@ type TransactionItem = {
   cost: number;
   type: ProductType;
   imeiSerials?: string[];
+  warrantyDays?: number;
 };
 
 type Transaction = {
