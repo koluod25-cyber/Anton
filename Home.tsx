@@ -3068,9 +3068,48 @@ logoBase64,
             </div>
           </div>
 
-          <p className="rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
-            Masa berlaku garansi belum dapat ditentukan karena aturan durasi garansi belum dikonfigurasi.
-          </p>
+                    {(() => {
+            const warrantyDays = warrantyResult.item.warrantyDays ?? 0;
+
+            if (warrantyDays <= 0) {
+              return (
+                <p className="rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+                  Durasi garansi tidak tercatat pada transaksi ini.
+                </p>
+              );
+            }
+
+            const purchaseDate = new Date(warrantyResult.transaction.date);
+            purchaseDate.setHours(0, 0, 0, 0);
+
+            const expiryDate = new Date(purchaseDate);
+            expiryDate.setDate(expiryDate.getDate() + warrantyDays);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const isValid = today <= expiryDate;
+
+            return (
+              <div className={`rounded-xl p-4 ${
+                isValid
+                  ? "border border-emerald-200 bg-emerald-50"
+                  : "border border-red-200 bg-red-50"
+              }`}>
+                <p className={`text-sm font-extrabold ${
+                  isValid ? "text-emerald-800" : "text-red-800"
+                }`}>
+                  {isValid ? "GARANSI MASIH BERLAKU" : "GARANSI KEDALUWARSA"}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                  Masa garansi: {warrantyDays} hari
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-700">
+                  Berakhir tanggal: {expiryDate.toLocaleDateString("id-ID")}
+                </p>
+              </div>
+            );
+          })()}
         </div>
       ) : null}
     </div>
