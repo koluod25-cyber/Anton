@@ -1815,12 +1815,23 @@ const checkWarranty = (rawValue: string = warrantyQuery) => {
       date: transactionDateToIso(transactionDate, now),
       customer: customer.trim() || "Umum",
       address,
-      phone,
-                imeiSerials: serialsByProduct[item.productId] ?? [],
+            phone,
+      items: cart.map(item => {
+        const product = products.find(entry => entry.id === item.productId)!;
+
+        return {
+          productId: product.id,
+          name: product.name,
+          qty: item.qty,
+          price: product.price,
+          cost: product.type === "jasa" ? 0 : product.cost,
+          type: product.type,
+          imeiSerials: serialsByProduct[item.productId] ?? [],
           warrantyDays: (() => {
             const match = printer.warrantyText.match(
               /(\d+)\s*(hari|bulan|tahun)/i
             );
+
             if (!match) return 0;
 
             const amount = Number(match[1]);
@@ -1831,6 +1842,7 @@ const checkWarranty = (rawValue: string = warrantyQuery) => {
               unit === "bulan" ? 30 : 1
             );
           })()
+        };
       }),
       subtotal,
       discount: discountAmount,
