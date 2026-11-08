@@ -3978,82 +3978,104 @@ logoBase64,
       {activePage === "scan-history" && FailedScanHistory()}
       {activePage === "garansi" && WarrantyCheck()}
       {securityMode !== null && (
-      <div className="fixed inset-0 z-[99999] flex min-h-screen items-center justify-center bg-slate-950 px-5 py-8">
-        <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
-          <div className="mb-5 text-center">
-            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-red-50 text-3xl">
-              🔒
-            </div>
-
-            <h2 className="text-xl font-extrabold text-slate-900">
-              Anton Service POS
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              {securityMode === "setup"
-                ? "Buat PIN 6 angka untuk mengamankan aplikasi."
-                : "Masukkan PIN untuk membuka aplikasi."}
-            </p>
-          </div>
-
-          <input
-            type="password"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={6}
-            value={pinInput}
-            onChange={event =>
-              setPinInput(event.target.value.replace(/\D/g, "").slice(0, 6))
-            }
-            onKeyDown={event => {
-              if (event.key === "Enter") handleSecuritySubmit();
-            }}
-            placeholder="Masukkan 6 angka PIN"
-            className="h-14 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-center text-2xl font-extrabold tracking-[0.5em] outline-none focus:border-red-500"
-          />
-
-          {securityMode === "setup" && (
-            <input
-              type="password"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              value={pinConfirm}
-              onChange={event =>
-                setPinConfirm(event.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              onKeyDown={event => {
-                if (event.key === "Enter") handleSecuritySubmit();
-              }}
-              placeholder="Ulangi PIN"
-              className="mt-3 h-14 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-center text-2xl font-extrabold tracking-[0.5em] outline-none focus:border-red-500"
-            />
-          )}
-
-          {securityError && (
-            <p className="mt-3 rounded-xl bg-red-50 p-3 text-center text-xs font-bold text-red-700">
-              {securityError}
-            </p>
-          )}
-
-          <button
-            onClick={handleSecuritySubmit}
-            disabled={securityBusy}
-            className="mt-5 w-full rounded-xl bg-red-700 py-4 text-sm font-extrabold text-white disabled:opacity-50"
-          >
-            {securityBusy
-              ? "Memeriksa..."
-              : securityMode === "setup"
-                ? "Simpan PIN"
-                : "Buka Aplikasi"}
-          </button>
-
-          <p className="mt-4 text-center text-[10px] text-slate-400">
-            PIN diperlukan untuk menjaga keamanan data AntonPOS.
-          </p>
+  <div className="fixed inset-0 z-[99999] flex min-h-screen items-center justify-center bg-slate-950 px-5 py-8">
+    <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+      <div className="mb-5 text-center">
+        <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-red-50 text-3xl">
+          🔒
         </div>
+
+        <h2 className="text-xl font-extrabold text-slate-900">
+          Anton Service POS
+        </h2>
+
+        <p className="mt-2 text-sm text-slate-500">
+          {securityMode === "setup"
+            ? "Buat PIN 6 angka untuk mengamankan aplikasi."
+            : securityMode === "change"
+              ? "Masukkan PIN lama dan buat PIN baru."
+              : "Masukkan PIN untuk membuka aplikasi."}
+        </p>
       </div>
-    )}
+
+      <input
+        type="password"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={6}
+        value={pinInput}
+        onChange={event =>
+          setPinInput(event.target.value.replace(/\D/g, "").slice(0, 6))
+        }
+        onKeyDown={event => {
+          if (event.key === "Enter") handleSecuritySubmit();
+        }}
+        placeholder={securityMode === "change" ? "PIN lama" : "Masukkan 6 angka PIN"}
+        className="h-14 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-center text-2xl font-extrabold tracking-[0.5em] outline-none focus:border-red-500"
+      />
+
+      {(securityMode === "setup" || securityMode === "change") && (
+        <input
+          type="password"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={6}
+          value={pinConfirm}
+          onChange={event =>
+            setPinConfirm(event.target.value.replace(/\D/g, "").slice(0, 6))
+          }
+          onKeyDown={event => {
+            if (event.key === "Enter") handleSecuritySubmit();
+          }}
+          placeholder={securityMode === "change" ? "PIN baru" : "Ulangi PIN"}
+          className="mt-3 h-14 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-center text-2xl font-extrabold tracking-[0.5em] outline-none focus:border-red-500"
+        />
+      )}
+
+      {securityMode === "change" && (
+        <input
+          type="password"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={6}
+          value={newPinConfirm}
+          onChange={event =>
+            setNewPinConfirm(event.target.value.replace(/\D/g, "").slice(0, 6))
+          }
+          onKeyDown={event => {
+            if (event.key === "Enter") handleSecuritySubmit();
+          }}
+          placeholder="Konfirmasi PIN baru"
+          className="mt-3 h-14 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-center text-2xl font-extrabold tracking-[0.5em] outline-none focus:border-red-500"
+        />
+      )}
+
+      {securityError && (
+        <p className="mt-3 rounded-xl bg-red-50 p-3 text-center text-xs font-bold text-red-700">
+          {securityError}
+        </p>
+      )}
+
+      <button
+        onClick={handleSecuritySubmit}
+        disabled={securityBusy}
+        className="mt-5 w-full rounded-xl bg-red-700 py-4 text-sm font-extrabold text-white disabled:opacity-50"
+      >
+        {securityBusy
+          ? "Memeriksa..."
+          : securityMode === "setup"
+            ? "Simpan PIN"
+            : securityMode === "change"
+              ? "Simpan PIN Baru"
+              : "Buka Aplikasi"}
+      </button>
+
+      <p className="mt-4 text-center text-[10px] text-slate-400">
+        PIN diperlukan untuk menjaga keamanan data AntonPOS.
+      </p>
+    </div>
+  </div>
+)}
       {activePage === "setting" && Setting()}
     </main>
   </div>
