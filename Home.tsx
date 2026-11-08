@@ -2164,7 +2164,157 @@ const checkWarranty = (rawValue: string = warrantyQuery) => {
   );
 };
   const saveAccount = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); const form = new FormData(event.currentTarget); const account: Account = { code: String(form.get("code") || "").trim(), name: String(form.get("name") || "").trim(), type: String(form.get("type")) as AccountType, balance: Number(form.get("balance") || 0) }; const isNew = accountEditor === "new"; const originalCode = !isNew && accountEditor ? (accountEditor as Account).code : null; if (!account.code || !account.name) { toast.error("Kode dan nama akun wajib diisi."); return; } if (!isNew && originalCode && accountBase.some(entry => entry.code === originalCode)) { toast.error("Akun sistem dikelola otomatis dan tidak dapat diedit."); return; } if (accounts.some(entry => entry.code === account.code && entry.code !== originalCode)) { toast.error("Kode akun sudah digunakan."); return; } setCustomAccounts(previous => upsertCustomAccount(previous, account, isNew ? null : originalCode)); setAccountEditor(null); toast.success("Akun COA disimpan."); }; const deleteAccount = (account: Account) => { if (accountBase.some(entry => entry.code === account.code)) { toast.error("Akun sistem tidak dapat dihapus."); return; } if (!window.confirm(`Hapus akun ${account.code} - ${account.name}?`)) return; setCustomAccounts(previous => removeCustomAccount(previous, account.code)); toast.success("Akun COA dihapus."); };
-  const uploadLogo = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 1_048_576) { toast.error("Ukuran logo maksimum 1MB."); return; } const reader = new FileReader(); reader.onload = () => { setLogo(String(reader.result)); toast.success("Logo toko diperbarui."); }; reader.readAsDataURL(file); };
+  const uploadLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (file.size > 1_048_576) {
+    toast.error("Ukuran logo maksimum 1MB.");
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    setLogo(String(reader.result));
+    toast.success("Logo toko diperbarui.");
+  };
+  reader.readAsDataURL(file);
+};
+
+const backupKeys = [
+  "anton_products_v22",
+  "anton_inventory_capital_adjustment_v22",
+  "anton_transactions_v22",
+  "anton_cash_movements_v1",
+  "anton_coa_v22",
+  "anton_printer_v22",
+  "anton_logo_v22",
+  "anton_opname_v22",
+  "anton_failed_scans_v22",
+] as const;
+
+const exportBackup = () => {
+  try {
+    const data: Record<string, string | null> = {};
+
+    backupKeys.forEach(key => {
+      data[key] = localStorage.getItem(key);
+    });
+
+    const backup = {
+      app: "AntonPOS",
+      version: 1,
+      createdAt: new Date().toISOString(),
+      data,
+    };
+
+    const blob = new Blob(
+      [JSON.stringify(backup, null, 2)],
+      { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `antonpos-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    toast.success("Backup data berhasil dibuat.");
+  } catch (error) {
+    console.error("Backup gagal:", error);
+    toast.error("Gagal membuat backup data.");
+  }
+};
+
+const importBackup = () => {
+  const input = document.createElement("input");
+
+  input.type = "file";
+  input.accept = ".json,application/json";
+
+  input.onchange = () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const backup = JSON.parse(String(reader.result));
+
+        if (
+          backup?.app !== "AntonPOS" ||
+          backup?.version !== 1 ||
+          !backup?.data ||
+          typeof backup.data !== "object" ||
+          Array.isArray(backup.data)
+        ) {
+          toast.error("File backup AntonPOS tidak valid.");
+          return;
+        }
+
+        const hasKnownKey = backupKeys.some(key =>
+          Object.prototype.hasOwnProperty.call(backup.data, key)
+        );
+
+        if (!hasKnownKey) {
+          toast.error("Data backup tidak ditemukan.");
+          return;
+        }
+
+        for (const key of Object.keys(backup.data)) {
+          if (
+            !backupKeys.includes(key as typeof backupKeys[number]) ||
+            (
+              backup.data[key] !== null &&
+              typeof backup.data[key] !== "string"
+            )
+          ) {
+            toast.error("Isi file backup tidak valid.");
+            return;
+          }
+        }
+
+        const confirmed = window.confirm(
+          "Pulihkan backup AntonPOS?\n\n" +
+          "Data yang sekarang tersimpan akan diganti dengan data dari backup. " +
+          "Pastikan Anda sudah memiliki backup terbaru sebelum melanjutkan."
+        );
+
+        if (!confirmed) return;
+
+        backupKeys.forEach(key => {
+          const value = backup.data[key];
+
+          if (typeof value === "string") {
+            localStorage.setItem(key, value);
+          } else {
+            localStorage.removeItem(key);
+          }
+        });
+
+        toast.success("Backup berhasil dipulihkan. Aplikasi akan dimuat ulang.");
+
+        window.location.reload();
+      } catch (error) {
+        console.error("Pemulihan backup gagal:", error);
+        toast.error("File backup rusak atau tidak dapat dibaca.");
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Gagal membaca file backup.");
+    };
+
+    reader.readAsText(file);
+  };
+
+  input.click();
+};
   const saveOpname = (goToBalance: boolean) => { setProducts(previous => { const next = previous.map(product => stockCount[product.id] === undefined || stockCount[product.id] === "" ? product : { ...product, stock: Math.max(0, Number(stockCount[product.id])) }); const delta = next.reduce((sum, product, index) => sum + inventoryCapitalDelta(previous[index], product), 0); if (delta !== 0) setInventoryCapitalAdjustment(value => value + delta); return next; }); setStockCount({}); localStorage.removeItem("anton_opname_v22"); toast.success("Stok opname disimpan dan Modal Buku Besar disesuaikan."); if (goToBalance) navigate("neraca"); };
   const resetAll = () => { if (!window.confirm("Reset seluruh produk, transaksi, akun tambahan, dan pengaturan?")) return; ["anton_products_v22", "anton_inventory_capital_adjustment_v22", "anton_transactions_v22", "anton_cash_movements_v1", "anton_coa_v22", "anton_printer_v22", "anton_logo_v22", "anton_opname_v22", "anton_failed_scans_v22"].forEach(key => localStorage.removeItem(key)); window.location.reload(); };
   const navigation = [
