@@ -940,6 +940,20 @@ async function verifyAppPin(pin: string, settings: AppSecuritySettings): Promise
 // =====================================================
 export default function Home() {
   const [activePage, setActivePage] = useState("dashboard");
+    const [securitySettings, setSecuritySettings] = useState<AppSecuritySettings | null>(
+    () => readAppSecurity()
+  );
+  const [appLocked, setAppLocked] = useState(() => Boolean(readAppSecurity()));
+  const [pinInput, setPinInput] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [securityMode, setSecurityMode] = useState<"setup" | "unlock" | "change" | null>(
+    () => readAppSecurity() ? "unlock" : "setup"
+  );
+  const [securityError, setSecurityError] = useState("");
+  const [securityBusy, setSecurityBusy] = useState(false);
+  const [securityMessage, setSecurityMessage] = useState("");
+  const [securityCooldown, setSecurityCooldown] = useState(0);
+  const securityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [warrantyQuery, setWarrantyQuery] = useState("");
   const [warrantyScannerOpen, setWarrantyScannerOpen] = useState(false);
   const [warrantyResult, setWarrantyResult] = useState<{
