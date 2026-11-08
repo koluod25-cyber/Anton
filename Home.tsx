@@ -954,6 +954,80 @@ export default function Home() {
   const [securityMessage, setSecurityMessage] = useState("");
   const [securityCooldown, setSecurityCooldown] = useState(0);
   const securityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lockApplication = () => {
+    if (!securitySettings) return;
+
+    setAppLocked(true);
+    setSecurityMode("unlock");
+    setPinInput("");
+    setSecurityError("");
+    setSecurityMessage("");
+  };
+
+  useEffect(() => {
+    if (!securitySettings || appLocked) return;
+
+    const resetIdleTimer = () => {
+      if (securityTimerRef.current) {
+        clearTimeout(securityTimerRef.current);
+      }
+
+      securityTimerRef.current = setTimeout(() => {
+        setAppLocked(true);
+        setSecurityMode("unlock");
+        setPinInput("");
+        setSecurityError("");
+      }, 60000);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        setAppLocked(true);
+        setSecurityMode("unlock");
+        setPinInput("");
+        setSecurityError("");
+      } else {
+        resetIdleTimer();
+      }
+    };
+
+    const handlePageHide = () => {
+      setAppLocked(true);
+      setSecurityMode("unlock");
+      setPinInput("");
+      setSecurityError("");
+    };
+
+    const activityEvents = [
+      "pointerdown",
+      "touchstart",
+      "keydown",
+      "scroll",
+      "mousemove",
+    ];
+
+    activityEvents.forEach(eventName =>
+      window.addEventListener(eventName, resetIdleTimer)
+    );
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+
+    resetIdleTimer();
+
+    return () => {
+      if (securityTimerRef.current) {
+        clearTimeout(securityTimerRef.current);
+      }
+
+      activityEvents.forEach(eventName =>
+        window.removeEventListener(eventName, resetIdleTimer)
+      );
+
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [securitySettings, appLocked]);
   const [warrantyQuery, setWarrantyQuery] = useState("");
   const [warrantyScannerOpen, setWarrantyScannerOpen] = useState(false);
   const [warrantyResult, setWarrantyResult] = useState<{
