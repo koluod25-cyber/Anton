@@ -3579,7 +3579,43 @@ logoBase64,
       ) : null}
     </div>
   );
-  const Setting = () => <div className="enter-panel"><SectionHeading eyebrow="Konfigurasi" title="Printer & identitas struk" description="Atur logo, ukuran media, serta teks pada struk pelanggan." /><div className="app-card mb-5 p-5"><p className="panel-label">Keamanan data</p><h2 className="mt-1 text-sm font-extrabold">Backup & Restore AntonPOS</h2><p className="mt-2 text-xs leading-relaxed text-slate-500">Simpan salinan produk, stok, transaksi, kas, COA, dan pengaturan ke file JSON. Gunakan file tersebut untuk memulihkan data ketika memasang ulang aplikasi atau berganti perangkat.</p><div className="mt-4 flex flex-wrap gap-2"><button onClick={exportBackup} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-xs font-extrabold text-white"><Download size={15} />Cadangkan Data</button><button onClick={importBackup} className="btn-press inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-xs font-extrabold text-white"><Upload size={15} />Pulihkan Data</button></div><p className="mt-3 text-[10px] font-semibold text-amber-700">Penting: simpan file backup di tempat aman. Pemulihan akan mengganti data yang saat ini tersimpan.</p></div><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+  const Setting = () => <div className="enter-panel"><SectionHeading eyebrow="Konfigurasi" title="Printer & identitas struk" description="Atur logo, ukuran media, serta teks pada struk pelanggan." /><div className="app-card mb-5 p-5"><p className="panel-label">Keamanan data</p><h2 className="mt-1 text-sm font-extrabold">Backup & Restore AntonPOS</h2><p className="mt-2 text-xs leading-relaxed text-slate-500">Simpan salinan produk, stok, transaksi, kas, COA, dan pengaturan ke file JSON. Gunakan file tersebut untuk memulihkan data ketika memasang ulang aplikasi atau berganti perangkat.</p><div className="mt-4 flex flex-wrap gap-2"><button onClick={exportBackup} className="btn-press inline-flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-3 text-xs font-extrabold text-white"><Download size={15} />Cadangkan Data</button><button onClick={importBackup} className="btn-press inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-xs font-extrabold text-white"><Upload size={15} />Pulihkan Data</button></div><p className="mt-3 text-[10px] font-semibold text-amber-700">Penting: simpan file backup di tempat aman. Pemulihan akan mengganti data yang saat ini tersimpan.</p></div>{securitySettings && (
+  <div className="app-card mb-5 p-5">
+    <p className="panel-label">Pengamanan aplikasi</p>
+
+    <h2 className="mt-1 text-sm font-extrabold">
+      Kunci PIN AntonPOS
+    </h2>
+
+    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+      Aplikasi terkunci otomatis setelah 1 menit tidak digunakan.
+    </p>
+
+    <div className="mt-4 flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => {
+          setPinInput("");
+          setPinConfirm("");
+          setNewPinConfirm("");
+          setSecurityError("");
+          setSecurityMode("change");
+        }}
+        className="btn-press rounded-xl bg-blue-700 px-4 py-3 text-xs font-extrabold text-white"
+      >
+        Ganti PIN
+      </button>
+
+      <button
+        type="button"
+        onClick={lockApplication}
+        className="btn-press rounded-xl bg-red-700 px-4 py-3 text-xs font-extrabold text-white"
+      >
+        Kunci Sekarang
+      </button>
+    </div>
+  </div>
+)}<div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
     <div className="app-card p-5">
   <p 
     className="panel-label">Koneksi Printer</p>
