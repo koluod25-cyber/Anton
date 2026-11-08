@@ -1028,6 +1028,108 @@ export default function Home() {
       window.removeEventListener("pagehide", handlePageHide);
     };
   }, [securitySettings, appLocked]);
+    const handleSecuritySubmit = async () => {
+    if (securityBusy) return;
+
+    setSecurityError("");
+    setSecurityMessage("");
+
+    if (!/^\d{6}$/.test(pinInput)) {
+      setSecurityError("PIN harus terdiri dari 6 angka.");
+      return;
+    }
+
+    setSecurityBusy(true);
+
+    try {
+      // Pembuatan PIN pertama
+      if (securityMode === "setup") {
+        if (pinInput !== pinConfirm) {
+          setSecurityError("Konfirmasi PIN tidak sama.");
+          return;
+        }
+
+        const salt = createPinSalt();
+        const pinHash = await createPinHash(pinInput, salt);
+
+        const newSettings: AppSecuritySettings = {
+          salt,
+          pinHash,
+          failedAttempts: 0,
+          lockedUntil: 0,
+        };
+
+        saveAppSecurity(newSettings);
+        setSecuritySettings(newSettings);
+        setAppLocked(false);
+        setSecurityMode(null);
+        setPinInput("");
+        setPinConfirm("");
+        setSecurityMessage("PIN berhasil dibuat.");
+        return;
+      }
+
+      // Membuka aplikasi dengan PIN
+      if (securityMode === "unlock") {
+        if (!securitySettings) {
+          setSecurityError("Pengaturan PIN tidak ditemukan.");
+          return;
+        }
+
+        const remaining = securitySettings.lockedUntil - Date.now();
+
+        if (remaining > 0) {
+          setSecurityError(
+            `Terlalu banyak percobaan. Coba lagi dalam ${Math.ceil(remaining / 1000)} detik.`
+          );
+          return;
+        }
+
+        const valid = await verifyAppPin(pinInput, securitySettings);
+
+        if (!valid) {
+          const attempts = securitySettings.failedAttempts + 1;
+          const updated: AppSecuritySettings = {
+            ...securitySettings,
+            failedAttempts: attempts >= 5 ? 0 : attempts,
+            lockedUntil: attempts >= 5 ? Date.now() + 30000 : 0,
+          };
+
+          saveAppSecurity(updated);
+          setSecuritySettings(updated);
+          setPinInput("");
+
+          setSecurityError(
+            attempts >= 5
+              ? "5 kali salah. Aplikasi dikunci selama 30 detik."
+              : `PIN salah. Percobaan ${attempts} dari 5.`
+          );
+          return;
+        }
+
+        const updated: AppSecuritySettings = {
+          ...securitySettings,
+          failedAttempts: 0,
+          lockedUntil: 0,
+        };
+
+        saveAppSecurity(updated);
+        setSecuritySettings(updated);
+        setAppLocked(false);
+        setSecurityMode(null);
+        setPinInput("");
+        setSecurityError("");
+      }
+    } catch (error) {
+      setSecurityError(
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan pada sistem keamanan."
+      );
+    } finally {
+      setSecurityBusy(false);
+    }
+  };
   const [warrantyQuery, setWarrantyQuery] = useState("");
   const [warrantyScannerOpen, setWarrantyScannerOpen] = useState(false);
   const [warrantyResult, setWarrantyResult] = useState<{
