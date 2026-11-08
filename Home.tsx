@@ -869,7 +869,75 @@ function BarcodeScannerModal({ open, onClose, onDetected }: { open: boolean; onC
   if (!open) return null;
   return <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/80 p-4"><div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl"><div className="flex items-center justify-between"><div><p className="panel-label">Kamera HP</p><h2 className="mt-1 text-lg font-extrabold">Scan barcode / QR produk</h2></div><button onClick={onClose} className="btn-press rounded-xl bg-slate-100 p-2" aria-label="Tutup scanner"><X size={17} /></button></div><div className="relative mt-4 overflow-hidden rounded-2xl bg-slate-950"><video ref={videoRef} muted playsInline className="aspect-video w-full object-cover" />{torchSupported ? <button type="button" onClick={() => void toggleTorch()} className={`btn-press absolute right-3 top-3 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-extrabold shadow-lg ${torchOn ? "bg-amber-400 text-amber-950" : "bg-white/90 text-slate-900"}`} aria-pressed={torchOn} aria-label={torchOn ? "Matikan senter" : "Nyalakan senter"}><Flashlight size={16} />{torchOn ? "Senter aktif" : "Senter"}</button> : null}</div><p className="mt-3 text-center text-xs font-semibold text-slate-500">{message}</p>{permissionDenied ? <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"><p className="font-extrabold">Akses kamera diperlukan</p><p className="mt-1 leading-relaxed">Pilih Buka Pengaturan, aktifkan izin Kamera untuk Anton Service, kembali ke aplikasi, lalu coba lagi.</p><div className="mt-3 flex gap-2"><button onClick={openCameraSettings} className="btn-press flex-1 rounded-lg bg-amber-600 px-3 py-2 font-extrabold text-white">Buka Pengaturan</button><button onClick={retryCamera} className="btn-press rounded-lg bg-white px-3 py-2 font-extrabold text-amber-800 ring-1 ring-amber-300">Coba Lagi</button></div></div> : null}<button onClick={onClose} className="btn-press mt-4 w-full rounded-xl bg-slate-900 py-3 text-xs font-extrabold text-white">Tutup kamera</button></div></div>;
 }
+// ================= PENGAMAN APLIKASI =================
+type AppSecuritySettings = {
+  salt: string;
+  pinHash: string;
+  failedAttempts: number;
+  lockedUntil: number;
+};
 
+const SECURITY_STORAGE_KEY = "anton_security_v1";
+const PIN_HASH_ITERATIONS = 200000;
+
+function readAppSecurity(): AppSecuritySettings | null {
+  try {
+    const raw = localStorage.getItem(SECURITY_STORAGE_KEY);
+    return raw ? JSON.parse(raw) as AppSecuritySettings : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveAppSecurity(settings: AppSecuritySettings) {
+  localStorage.setItem(SECURITY_STORAGE_KEY, JSON.stringify(settings));
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  bytes.forEach(byte => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+async function createPinHash(pin: string, salt: string): Promise<string> {
+  if (!crypto?.subtle) {
+    throw new Error("Fitur keamanan PIN tidak didukung perangkat ini.");
+  }
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(pin),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const hash = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: Uint8Array.from(atob(salt), char => char.charCodeAt(0)),
+      iterations: PIN_HASH_ITERATIONS,
+      hash: "SHA-256",
+    },
+    key,
+    256
+  );
+
+  return bytesToBase64(new Uint8Array(hash));
+}
+
+function createPinSalt(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return bytesToBase64(bytes);
+}
+
+async function verifyAppPin(pin: string, settings: AppSecuritySettings): Promise<boolean> {
+  const hash = await createPinHash(pin, settings.salt);
+  return hash === settings.pinHash;
+}
+// =====================================================
 export default function Home() {
   const [activePage, setActivePage] = useState("dashboard");
   const [warrantyQuery, setWarrantyQuery] = useState("");
