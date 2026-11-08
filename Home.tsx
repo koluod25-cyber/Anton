@@ -946,6 +946,7 @@ export default function Home() {
   const [appLocked, setAppLocked] = useState(() => Boolean(readAppSecurity()));
   const [pinInput, setPinInput] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
+  const [newPinConfirm, setNewPinConfirm] = useState("");
   const [securityMode, setSecurityMode] = useState<"setup" | "unlock" | "change" | null>(
     () => readAppSecurity() ? "unlock" : "setup"
   );
@@ -1068,7 +1069,51 @@ export default function Home() {
         setSecurityMessage("PIN berhasil dibuat.");
         return;
       }
+      // Mengganti PIN
+      if (securityMode === "change") {
+        if (!securitySettings) {
+          setSecurityError("Pengaturan PIN tidak ditemukan.");
+          return;
+        }
 
+        const valid = await verifyAppPin(pinInput, securitySettings);
+
+        if (!valid) {
+          setSecurityError("PIN lama salah.");
+          setPinInput("");
+          return;
+        }
+
+        if (!/^\d{6}$/.test(pinConfirm) ||
+            !/^\d{6}$/.test(newPinConfirm)) {
+          setSecurityError("PIN baru harus terdiri dari 6 angka.");
+          return;
+        }
+
+        if (pinConfirm !== newPinConfirm) {
+          setSecurityError("Konfirmasi PIN baru tidak sama.");
+          return;
+        }
+
+        const salt = createPinSalt();
+        const pinHash = await createPinHash(pinConfirm, salt);
+
+        const updated: AppSecuritySettings = {
+          salt,
+          pinHash,
+          failedAttempts: 0,
+          lockedUntil: 0,
+        };
+
+        saveAppSecurity(updated);
+        setSecuritySettings(updated);
+        setSecurityMode(null);
+        setPinInput("");
+        setPinConfirm("");
+        setNewPinConfirm("");
+        setSecurityMessage("PIN berhasil diganti.");
+        return;
+                           }
       // Membuka aplikasi dengan PIN
       if (securityMode === "unlock") {
         if (!securitySettings) {
