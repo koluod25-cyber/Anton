@@ -2171,6 +2171,22 @@ const checkWarranty = (rawValue: string = warrantyQuery) => {
       warrantyCode: `WR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*90+10)}`
     };
 
+        // Simpan transaksi secara langsung sebelum mengubah stok dan mengosongkan keranjang.
+    const updatedTransactions = [transaction, ...transactions];
+
+    try {
+      localStorage.setItem(
+        "anton_transactions_v22",
+        JSON.stringify(updatedTransactions)
+      );
+    } catch (error) {
+      console.error("Gagal menyimpan transaksi:", error);
+      toast.error("Transaksi gagal disimpan. Keranjang tetap dipertahankan.");
+      return;
+    }
+
+    setTransactions(updatedTransactions);
+
     setProducts(previous =>
       previous.map(product => {
         const item = cart.find(entry => entry.productId === product.id);
@@ -2180,7 +2196,6 @@ const checkWarranty = (rawValue: string = warrantyQuery) => {
       })
     );
 
-    setTransactions(previous => [transaction, ...previous]);
     setCart([]);
     setDiscountPercent(0);
     setTransportasiAmount(0);
