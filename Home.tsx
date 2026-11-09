@@ -491,7 +491,15 @@ export const summarizeTransactionTotals = (
     summary.spareRevenue += revenue.spareGross;
     summary.serviceNetRevenue += revenue.serviceNet;
     summary.spareNetRevenue += revenue.spareNet;
-    summary.hpp += transaction.hppTotal || 0;
+    summary.hpp += Number(transaction.hppTotal) > 0
+  ? Number(transaction.hppTotal)
+  : (transaction.items || []).reduce(
+      (sum, item) =>
+        sum + (item.type === "spare"
+          ? Number(item.cost || 0) * Number(item.qty || 0)
+          : 0),
+      0
+    );
     summary.salesDiscount -= revenue.effectiveDiscount;
     summary.taxPayable += taxAmount;
     summary.expenseTotal += expense;
