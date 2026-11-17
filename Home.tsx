@@ -1666,8 +1666,6 @@ warrantyCode: transaction.warrantyCode,
   const [paymentAmounts, setPaymentAmounts] = useState<TransactionPayments>({ cash: 0, transfer: 0, qris: 0, piutang: 0 });
   const [paid, setPaid] = useState(0);
   const [cashierMode, setCashierMode] = useState<"sale" | "income" | "expense">("sale");
-  const [cashierRevenueType, setCashierRevenueType] = useState<"jasa" | "spare">("jasa");
-  const [showRevenueTypeOptions, setShowRevenueTypeOptions] = useState(false);
   const [movementAccountCode, setMovementAccountCode] = useState("501");
   const [movementKind, setMovementKind] = useState<CashMovementKind>("other_income");
   const [movementDate, setMovementDate] = useState(() => localDateInputValue());
