@@ -1910,13 +1910,14 @@ const reportSystemBalances = useMemo(
   const allocatedPaymentTotal = nonReceivablePaid + effectiveReceivable;
   const change = Math.max(0, nonReceivablePaid - total);
   const hasPaymentShortfall = allocatedPaymentTotal < total;
-  const paymentBreakdown: TransactionPayments = { ...paymentAmounts, piutang: effectiveReceivable };
+  const paymentBreakdown: TransactionPayments = { ...paymentAmounts, piutang: effectiveReceivable }; 
   const filteredProducts = products.filter(item =>
-  item.type === cashierRevenueType &&
+  (item.type === "jasa" || item.type === "spare") &&
   [item.name, item.sku, item.barcode].some(value =>
     value.toLowerCase().includes(query.toLowerCase())
   )
 );
+  
   const filteredTransactions = transactions.filter(
   item =>
     !item.deletedAt &&
