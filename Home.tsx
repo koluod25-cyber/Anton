@@ -2115,7 +2115,7 @@ const handleBarcodeValue = (value: string) => {
 
     for (const cartItem of cart) {
       const product = products.find(entry => entry.id === cartItem.productId);
-      if (!product || product.type !== "spare") continue;
+      if (!product || product.type !== "spare" || !product.barcode.trim()) continue;
 
       const serials: string[] = [];
 
