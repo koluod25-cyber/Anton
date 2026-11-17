@@ -2731,9 +2731,10 @@ const importBackup = () => {
       <button
         type="button"
         onClick={() => {
-          setCashierMode("expense");
-          setMovementKind("expense");
-        }}
+  setCashierMode("income");
+  setMovementKind("other_income");
+  setShowRevenueTypeOptions(false);
+}}
         className={cn(
           "rounded-xl px-3 py-3 text-xs font-extrabold",
           cashierMode === "expense"
@@ -2743,6 +2744,11 @@ const importBackup = () => {
       >
         Pengeluaran
       </button>
+      onClick={() => {
+  setCashierMode("expense");
+  setMovementKind("expense");
+  setShowRevenueTypeOptions(false);
+}}
     </div>
       
 {cashierMode !== "sale" && (
