@@ -2746,6 +2746,41 @@ const importBackup = () => {
     Pengeluaran
   </button>
 </div>
+ {cashierMode === "sale" && showRevenueTypeOptions && (
+  <div className="mb-4 grid grid-cols-2 gap-2">
+    <button
+      type="button"
+      onClick={() => {
+        setCashierRevenueType("jasa");
+        setShowRevenueTypeOptions(false);
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierRevenueType === "jasa"
+          ? "bg-red-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Jasa
+    </button>
+
+    <button
+      type="button"
+      onClick={() => {
+        setCashierRevenueType("spare");
+        setShowRevenueTypeOptions(false);
+      }}
+      className={cn(
+        "rounded-xl px-3 py-3 text-xs font-extrabold",
+        cashierRevenueType === "spare"
+          ? "bg-blue-600 text-white"
+          : "border border-slate-200 bg-white text-slate-600"
+      )}
+    >
+      Penjualan
+    </button>
+  </div>
+)}   
 {cashierMode !== "sale" && (
   <div className="app-card space-y-4 p-5">
     <div>
