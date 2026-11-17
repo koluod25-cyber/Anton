@@ -2700,10 +2700,7 @@ const importBackup = () => {
     <div className="mb-4 grid grid-cols-3 gap-2">
       <button
         type="button"
-        onClick={() => {
-          setCashierMode("sale");
-          setShowRevenueTypeOptions(value => !value);
-        }}
+        onClick={() => setCashierMode("sale")}
         className={cn(
           "rounded-xl px-3 py-3 text-xs font-extrabold",
           cashierMode === "sale"
@@ -2718,7 +2715,6 @@ const importBackup = () => {
         type="button"
         onClick={() => {
           setCashierMode("income");
-          setShowRevenueTypeOptions(false);
           setMovementKind("other_income");
         }}
         className={cn(
@@ -2735,7 +2731,6 @@ const importBackup = () => {
         type="button"
         onClick={() => {
           setCashierMode("expense");
-          setShowRevenueTypeOptions(false);
           setMovementKind("expense");
         }}
         className={cn(
