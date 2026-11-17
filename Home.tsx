@@ -2695,62 +2695,57 @@ const importBackup = () => {
   </div>;
 
   const Pos = () => <div className="enter-panel">
-    <div className="mb-4 grid grid-cols-3 gap-2">
-      <button
-        type="button"
-        onClick={() => {
-  setCashierMode("sale");
-  setShowRevenueTypeOptions(value => !value);
-}}
-        className={cn(
-          "rounded-xl px-3 py-3 text-xs font-extrabold",
-          cashierMode === "sale"
-            ? "bg-red-600 text-white"
-            : "border border-slate-200 bg-white text-slate-600"
-        )}
-      >
-        Pendapatan
-      </button>
+<div className="mb-4 grid grid-cols-3 gap-2">
+  <button
+    type="button"
+    onClick={() => {
+      setCashierMode("sale");
+      setShowRevenueTypeOptions(value => !value);
+    }}
+    className={cn(
+      "rounded-xl px-3 py-3 text-xs font-extrabold",
+      cashierMode === "sale"
+        ? "bg-red-600 text-white"
+        : "border border-slate-200 bg-white text-slate-600"
+    )}
+  >
+    Pendapatan
+  </button>
 
-      <button
-        type="button"
-        onClick={() => {
-          setCashierMode("income");
-          setMovementKind("other_income");
-        }}
-        className={cn(
-          "rounded-xl px-3 py-3 text-xs font-extrabold",
-          cashierMode === "income"
-            ? "bg-emerald-600 text-white"
-            : "border border-slate-200 bg-white text-slate-600"
-        )}
-      >
-        Pemasukan
-      </button>
+  <button
+    type="button"
+    onClick={() => {
+      setCashierMode("income");
+      setMovementKind("other_income");
+      setShowRevenueTypeOptions(false);
+    }}
+    className={cn(
+      "rounded-xl px-3 py-3 text-xs font-extrabold",
+      cashierMode === "income"
+        ? "bg-emerald-600 text-white"
+        : "border border-slate-200 bg-white text-slate-600"
+    )}
+  >
+    Pemasukan
+  </button>
 
-      <button
-        type="button"
-        onClick={() => {
-  setCashierMode("income");
-  setMovementKind("other_income");
-  setShowRevenueTypeOptions(false);
-}}
-        className={cn(
-          "rounded-xl px-3 py-3 text-xs font-extrabold",
-          cashierMode === "expense"
-            ? "bg-amber-500 text-white"
-            : "border border-slate-200 bg-white text-slate-600"
-        )}
-      >
-        Pengeluaran
-      </button>
-      onClick={() => {
-  setCashierMode("expense");
-  setMovementKind("expense");
-  setShowRevenueTypeOptions(false);
-}}
-    </div>
-      
+  <button
+    type="button"
+    onClick={() => {
+      setCashierMode("expense");
+      setMovementKind("expense");
+      setShowRevenueTypeOptions(false);
+    }}
+    className={cn(
+      "rounded-xl px-3 py-3 text-xs font-extrabold",
+      cashierMode === "expense"
+        ? "bg-amber-500 text-white"
+        : "border border-slate-200 bg-white text-slate-600"
+    )}
+  >
+    Pengeluaran
+  </button>
+</div>
 {cashierMode !== "sale" && (
   <div className="app-card space-y-4 p-5">
     <div>
