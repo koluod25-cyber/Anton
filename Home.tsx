@@ -2621,45 +2621,169 @@ const importBackup = () => {
         if (!hasKnownKey) {
           toast.error("Data backup tidak ditemukan.");
           return;
+
+const getAntonStorageKeys = (): string[] => {
+  const keys: string[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+
+    if (key && key.startsWith("anton_")) {
+      keys.push(key);
+    }
+  }
+
+  return keys.sort();
+};
+
+const exportBackup = () => {
+  try {
+    const data: Record<string, string | null> = {};
+
+    getAntonStorageKeys().forEach(key => {
+      data[key] = localStorage.getItem(key);
+    });
+
+    const backup = {
+      app: "AntonPOS",
+      version: 2,
+      createdAt: new Date().toISOString(),
+      totalData: Object.keys(data).length,
+      data,
+    };
+
+    const blob = new Blob(
+      [JSON.stringify(backup, null, 2)],
+      { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `antonpos-backup-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    toast.success(
+      `Backup berhasil dibuat. ${Object.keys(data).length} data tersimpan dicadangkan.`
+    );
+  } catch (error) {
+    console.error("Backup gagal:", error);
+    toast.error("Backup gagal. Periksa ruang penyimpanan perangkat.");
+  }
+};
+
+const importBackup = () => {
+  const input = document.createElement("input");
+
+  input.type = "file";
+  input.accept = ".json,application/json";
+
+  input.onchange = () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Ukuran file backup melebihi batas 50 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const backup = JSON.parse(String(reader.result));
+
+        if (
+          backup?.app !== "AntonPOS" ||
+          ![1, 2].includes(backup?.version) ||
+          !backup?.data ||
+          typeof backup.data !== "object" ||
+          Array.isArray(backup.data)
+        ) {
+          toast.error("File backup AntonPOS tidak valid.");
+          return;
         }
 
-        for (const key of Object.keys(backup.data)) {
-          if (
-            !backupKeys.includes(key as typeof backupKeys[number]) ||
-            (
-              backup.data[key] !== null &&
-              typeof backup.data[key] !== "string"
-            )
-          ) {
-            toast.error("Isi file backup tidak valid.");
-            return;
-          }
+        const backupEntries = Object.entries(backup.data) as [
+          string,
+          unknown
+        ][];
+
+        const validEntries = backupEntries.every(([key, value]) => {
+          return (
+            key.startsWith("anton_") &&
+            (value === null || typeof value === "string")
+          );
+        });
+
+        if (!validEntries || backupEntries.length === 0) {
+          toast.error("Isi file backup tidak valid atau kosong.");
+          return;
         }
 
         const confirmed = window.confirm(
-          "Pulihkan backup AntonPOS?\n\n" +
-          "Data yang sekarang tersimpan akan diganti dengan data dari backup. " +
-          "Pastikan Anda sudah memiliki backup terbaru sebelum melanjutkan."
+          "UPDATE / PULIHKAN DATA ANTONPOS?\n\n" +
+          `Jumlah data dalam backup: ${backupEntries.length}\n\n` +
+          "Data pada perangkat akan diperbarui menggunakan file backup.\n" +
+          "Untuk backup versi terbaru, data AntonPOS yang tidak ada dalam file akan dihapus.\n\n" +
+          "Pastikan Anda sudah membuat backup data saat ini sebelum melanjutkan."
         );
 
         if (!confirmed) return;
 
-        backupKeys.forEach(key => {
-          const value = backup.data[key];
+        // Simpan kondisi sebelumnya untuk pemulihan jika proses gagal.
+        const previousData: Record<string, string> = {};
 
-          if (typeof value === "string") {
-            localStorage.setItem(key, value);
-          } else {
-            localStorage.removeItem(key);
-          }
+        getAntonStorageKeys().forEach(key => {
+          const value = localStorage.getItem(key);
+          if (value !== null) previousData[key] = value;
         });
 
-        toast.success("Backup berhasil dipulihkan. Aplikasi akan dimuat ulang.");
+        try {
+          // Backup versi 2 menyinkronkan seluruh data AntonPOS.
+          // Backup versi 1 tetap didukung tanpa menghapus data lain.
+          if (backup.version === 2) {
+            getAntonStorageKeys().forEach(key => {
+              if (!Object.prototype.hasOwnProperty.call(backup.data, key)) {
+                localStorage.removeItem(key);
+              }
+            });
+          }
+
+          backupEntries.forEach(([key, value]) => {
+            if (typeof value === "string") {
+              localStorage.setItem(key, value);
+            } else {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch (restoreError) {
+          // Kembalikan data sebelumnya jika penulisan backup gagal.
+          getAntonStorageKeys().forEach(key => {
+            localStorage.removeItem(key);
+          });
+
+          Object.entries(previousData).forEach(([key, value]) => {
+            localStorage.setItem(key, value);
+          });
+
+          throw restoreError;
+        }
+
+        toast.success(
+          "Data AntonPOS berhasil diperbarui. Aplikasi akan dimuat ulang."
+        );
 
         window.location.reload();
       } catch (error) {
         console.error("Pemulihan backup gagal:", error);
-        toast.error("File backup rusak atau tidak dapat dibaca.");
+        toast.error("Backup gagal dipulihkan. Data lama dipertahankan jika memungkinkan.");
       }
     };
 
@@ -2672,6 +2796,7 @@ const importBackup = () => {
 
   input.click();
 };
+    
   const saveOpname = (goToBalance: boolean) => { setProducts(previous => { const next = previous.map(product => stockCount[product.id] === undefined || stockCount[product.id] === "" ? product : { ...product, stock: Math.max(0, Number(stockCount[product.id])) }); const delta = next.reduce((sum, product, index) => sum + inventoryCapitalDelta(previous[index], product), 0); if (delta !== 0) setInventoryCapitalAdjustment(value => value + delta); return next; }); setStockCount({}); localStorage.removeItem("anton_opname_v22"); toast.success("Stok opname disimpan dan Modal Buku Besar disesuaikan."); if (goToBalance) navigate("neraca"); };
   const resetAll = () => { if (!window.confirm("Reset seluruh produk, transaksi, akun tambahan, dan pengaturan?")) return; ["anton_products_v22", "anton_inventory_capital_adjustment_v22", "anton_transactions_v22", "anton_cash_movements_v1", "anton_coa_v22", "anton_printer_v22", "anton_logo_v22", "anton_opname_v22", "anton_failed_scans_v22"].forEach(key => localStorage.removeItem(key)); window.location.reload(); };
   const navigation = [
