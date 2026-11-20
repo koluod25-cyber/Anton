@@ -2536,63 +2536,6 @@ const handleBarcodeValue = (value: string) => {
   reader.readAsDataURL(file);
 };
 
-const backupKeys = [
-  "anton_products_v22",
-  "anton_inventory_capital_adjustment_v22",
-  "anton_transactions_v22",
-  "anton_cash_movements_v1",
-  "anton_coa_v22",
-  "anton_printer_v22",
-  "anton_logo_v22",
-  "anton_opname_v22",
-  "anton_failed_scans_v22",
-] as const;
-
-const exportBackup = () => {
-  try {
-    const data: Record<string, string | null> = {};
-
-    backupKeys.forEach(key => {
-      data[key] = localStorage.getItem(key);
-    });
-
-    const backup = {
-      app: "AntonPOS",
-      version: 1,
-      createdAt: new Date().toISOString(),
-      data,
-    };
-
-    const blob = new Blob(
-      [JSON.stringify(backup, null, 2)],
-      { type: "application/json" }
-    );
-
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = `antonpos-backup-${new Date().toISOString().slice(0, 10)}.json`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
-
-    toast.success("Backup data berhasil dibuat.");
-  } catch (error) {
-    console.error("Backup gagal:", error);
-    toast.error("Gagal membuat backup data.");
-  }
-};
-
-const importBackup = () => {
-  const input = document.createElement("input");
-
-  input.type = "file";
-  input.accept = ".json,application/json";
-
 const getAntonStorageKeys = (): string[] => {
   const keys: string[] = [];
 
