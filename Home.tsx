@@ -2593,35 +2593,6 @@ const importBackup = () => {
   input.type = "file";
   input.accept = ".json,application/json";
 
-  input.onchange = () => {
-    const file = input.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      try {
-        const backup = JSON.parse(String(reader.result));
-
-        if (
-          backup?.app !== "AntonPOS" ||
-          backup?.version !== 1 ||
-          !backup?.data ||
-          typeof backup.data !== "object" ||
-          Array.isArray(backup.data)
-        ) {
-          toast.error("File backup AntonPOS tidak valid.");
-          return;
-        }
-
-        const hasKnownKey = backupKeys.some(key =>
-          Object.prototype.hasOwnProperty.call(backup.data, key)
-        );
-
-        if (!hasKnownKey) {
-          toast.error("Data backup tidak ditemukan.");
-          return;
-
 const getAntonStorageKeys = (): string[] => {
   const keys: string[] = [];
 
